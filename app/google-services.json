@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "397751724646",
+    "project_id": "servicio-5abfe",
+    "storage_bucket": "servicio-5abfe.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:397751724646:android:342caccce91b7e1ae8dba7",
+        "android_client_info": {
+          "package_name": "com.dts.sermov"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4yrQaEjrJ1rGFi6SyBIau_3_vw9YZKZQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
