@@ -80,6 +80,7 @@ class Tarea : PBase() {
 
             idorden=gl?.gint!!
 
+
             loadItem()
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
