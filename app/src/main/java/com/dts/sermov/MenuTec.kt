@@ -6,15 +6,21 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dts.base.clsClasses
 import com.dts.classes.RecyclerItemClickListener
+import com.dts.classes.clsEnvioimagenObj
 import com.dts.classes.clsEstadoordenObj
 import com.dts.classes.clsOrdenclienteObj
 import com.dts.classes.clsOrdenencObj
+import com.dts.classes.clsOrdenenccapObj
+import com.dts.classes.clsOrdenfotoObj
 import com.dts.classes.clsTipoordenObj
+import com.dts.classes.clsUpdsaveObj
 import com.dts.fbase.fbLocItem
 import com.dts.ladapt.LA_OrdenAdapter
 import com.dts.service.GPSLocation
@@ -26,6 +32,8 @@ class MenuTec : PBase() {
     var lbluser: TextView? = null
     var lblfecha: TextView? = null
     var lblreg: TextView? = null
+    var lblpend: TextView? = null
+    var imgpend: ImageView? = null
 
     var fbl: fbLocItem? =null
 
@@ -38,10 +46,11 @@ class MenuTec : PBase() {
 
     var gps: GPSLocation? = null
 
-    val items = ArrayList<clsClasses.clsOrdenlist>()
+    var items = ArrayList<clsClasses.clsOrdenlist>()
 
     var saveselidx:Int=-1
     var afecha:Long=0L
+    var idle=false
 
     var location: Location? = null
 
@@ -56,8 +65,10 @@ class MenuTec : PBase() {
             menuview?.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL,false)
 
             lbluser = findViewById(R.id.textView15);lbluser?.text=gl?.nuser!!
-            lblfecha = findViewById(R.id.textView8);
-            lblreg = findViewById(R.id.textView);
+            lblfecha = findViewById(R.id.textView8)
+            lblreg = findViewById(R.id.textView)
+            lblpend = findViewById(R.id.textView31);lblpend?.text=""
+            imgpend = findViewById(R.id.imageView24);imgpend?.isVisible=false
 
             OrdenencObj = clsOrdenencObj(this, Con!!, db!!)
             EstadoordenObj = clsEstadoordenObj(this, Con!!, db!!)
@@ -74,7 +85,11 @@ class MenuTec : PBase() {
             setHandlers()
 
             val handler = Handler(Looper.getMainLooper())
-            handler.postDelayed({GPS()}, 200)
+            handler.postDelayed({
+                GPS()
+                idle=true
+                listItems()
+            }, 20)
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -83,6 +98,15 @@ class MenuTec : PBase() {
 
 
     //region Events
+
+    fun doCom(view: View) {
+        try {
+            gl?.com_pend=true
+            startActivity(Intent(this,Comunicacion::class.java))
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+    }
 
     fun doPrev(view: View) {
        afecha= du?.addDays(afecha,-1)!!
@@ -102,7 +126,7 @@ class MenuTec : PBase() {
 
                     override fun onItemClick(view: View, position: Int) {
                         saveselidx=position
-                        gl?.gint=items?.get(position)?.idorden!!
+                        gl?.idorden=items?.get(position)?.idorden!!
                         GPS()
                         startIntent()
                     }
@@ -124,17 +148,21 @@ class MenuTec : PBase() {
 
     private fun listItems() {
         var item: clsClasses.clsOrdenlist
-        var regs=0
-        var pend=0
+        var regs=0;var pend=0
+
+        if (!idle) return
 
         try {
             items.clear()
+
             EstadoordenObj?.fill()
             TipoordenObj?.fill()
             OrdenclienteObj?.fill()
 
-            OrdenencObj?.fill("WHERE (fecha="+afecha+")")
-            regs=OrdenencObj?.count!!;pend=regs
+            OrdenencObj?.fill("WHERE ((fecha="+afecha+") AND (idestado>0)) OR " +
+                              "((fecha<"+afecha+") AND (idestado in (4,8))) " +
+                              "ORDER BY Fecha,idOrden")
+            regs=OrdenencObj?.count!!;pend=0
 
             for (ord in OrdenencObj?.items!!) {
                 item= clsClasses.clsOrdenlist()
@@ -145,6 +173,10 @@ class MenuTec : PBase() {
                 item.fecha = du?.sfecha(ord.fecha).toString()+" "+du?.shora(ord.hora_ini).toString()
                 item.estado = nombreEstado(ord.idestado)
                 item.idestado = ord.idestado
+
+                if (ord.idestado>0) {
+                    if (ord.idestado!=5) pend++
+                }
 
                 items.add(item)
             }
@@ -204,7 +236,8 @@ class MenuTec : PBase() {
             fbl!!.setItem(gl?.gpsroot!!, litem)
 
         } catch (e: Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+            //msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+            toast("No se logro obtener coordenadas.")
         }
     }
 
@@ -254,6 +287,29 @@ class MenuTec : PBase() {
         return "-"
     }
 
+    fun registrosOffline() {
+        try {
+            var UpdsaveObj= clsUpdsaveObj(this,Con!!,db!!)
+            var OrdenfotoObj= clsOrdenfotoObj(this,Con!!,db!!)
+            var EnvioimagenObj= clsEnvioimagenObj(this,Con!!,db!!)
+
+            UpdsaveObj.fill()
+            OrdenfotoObj.fill("WHERE (statcom=0)")
+            EnvioimagenObj.fill()
+
+            var cupd=UpdsaveObj?.count
+            var cfot=OrdenfotoObj?.count
+            var cimg=EnvioimagenObj?.count
+
+            imgpend?.isVisible=(cupd!! + cfot!! + cimg!!)>0
+            lblpend?.text="e: "+cupd+" / f: "+cfot+" / i: "+cimg
+
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+
+    }
+
     //endregion
 
     //region Activity Events
@@ -273,6 +329,7 @@ class MenuTec : PBase() {
             } catch (e: Exception) { }
 
             listItems()
+            registrosOffline()
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
         }

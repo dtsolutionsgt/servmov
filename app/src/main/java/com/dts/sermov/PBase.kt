@@ -86,7 +86,7 @@ open class PBase : AppCompatActivity() {
 
     //region Common
 
-    val storage: String
+    var storage: String = ""
         get() {
             val sd = applicationContext.getExternalFilesDir("")!!.absolutePath
             val sp = sd+"/images/"

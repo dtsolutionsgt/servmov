@@ -7,30 +7,29 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
+import android.provider.Settings
 import android.text.InputType
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.dts.base.clsClasses
 import com.dts.classes.clsSaveposObj
 import com.dts.classes.clsUsuarioObj
 import com.dts.classes.extListDlg
 import com.dts.fbase.fbLocItem
 import com.dts.service.GPSService
-import com.dts.webapi.ClassesAPI
-import com.dts.webapi.GetUsers
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import org.apache.commons.io.FileUtils
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.net.ConnectException
-import java.net.SocketTimeoutException
+import java.io.IOException
+
 
 class Session : PBase() {
 
@@ -46,6 +45,9 @@ class Session : PBase() {
 
     var litem: clsClasses.clsLocItem? = null
     var ids: MutableList<Int> = java.util.ArrayList()
+
+    val fdown = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "")
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -143,65 +145,6 @@ class Session : PBase() {
 
     //endregion
 
-    //region Test retrofit
-
-    private fun llenaDatos() {
-        try {
-            ids.clear()
-            ids.add(102)
-            ids.add(152)
-
-            listaSucursales()
-        } catch (e: java.lang.Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
-        }
-
-    }
-
-    private fun listaSucursales() {
-        try {
-            val sucid = retrofit!!.CrearServicio(GetUsers::class.java, gl!!.urlbase)
-            val call = sucid.GetUsers(44)
-
-            call!!.enqueue(object : Callback<List<ClassesAPI.clsAPIUsers?>?> {
-                override fun onResponse(call: Call<List<ClassesAPI.clsAPIUsers?>?>,
-                                        response: Response<List<ClassesAPI.clsAPIUsers?>?>
-                ) {
-                    var item: ClassesAPI.clsAPIUsers
-
-                    if (response.isSuccessful) {
-                        val lista = response.body()
-
-                        if (lista != null && lista.size > 0) {
-                            for (litem in lista) {
-                                var nn=litem?.UserName
-                                var usid=litem?.UserId
-                            }
-                        }
-                    } else {
-                        var se="err"
-                        //mostrarError(response, call, object : Any() {}.javaClass.enclosingMethod.name)
-                    }
-                }
-
-                override fun onFailure(call: Call<List<ClassesAPI.clsAPIUsers?>?>, t: Throwable) {
-                    if (t is SocketTimeoutException) {
-                        msgbox("¡Connection Timeout!")
-                    } else if (t is ConnectException) {
-                        msgbox("¡Problemas de conexión!Inténtelo de nuevo")
-                    }
-                    //cancelarPeticion(call)
-                }
-
-            })
-
-        } catch (e: java.lang.Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
-        }
-    }
-
-    //endregion
-
     //region Localizacion
 
     fun startGPSService() {
@@ -292,7 +235,6 @@ class Session : PBase() {
     }
 
     private fun copyToDownload(fname: String, msg: String) {
-        val fdown = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "")
 
         try {
             val dfile: String = fdown.getAbsolutePath() + "/" + fname
@@ -305,21 +247,114 @@ class Session : PBase() {
 
     private fun copyFile(from: String, to: String) {
         try {
-            var bytesum = 0
-            var byteread = 0
-            val oldfile = File(from)
-            val buffer = ByteArray(1444)
-            val inStream: InputStream = FileInputStream(from)
-            val fs = FileOutputStream(to)
-            while (inStream.read(buffer).also { byteread = it } != -1) {
-                bytesum += byteread
-                fs.write(buffer, 0, byteread)
-            }
-            inStream.close()
-            fs.close()
+            val sourceFile = File(from)
+            val destinationFile = File(to)
+            sourceFile.copyTo(destinationFile, overwrite = true)
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+    }
+
+    private fun limpiaTablas() {
+        try {
+            db!!.beginTransaction()
+
+            db?.execSQL("DELETE FROM Envioimagen");
+            db?.execSQL("DELETE FROM Estadoorden");
+            db?.execSQL("DELETE FROM Ordenenccap");
+            db?.execSQL("DELETE FROM Ordencliente");
+            db?.execSQL("DELETE FROM Ordencont");
+            db?.execSQL("DELETE FROM Ordendet");
+            db?.execSQL("DELETE FROM Ordendir");
+            db?.execSQL("DELETE FROM Ordenenc");
+            db?.execSQL("DELETE FROM Ordenfoto");
+            db?.execSQL("DELETE FROM Tipoorden");
+            db?.execSQL("DELETE FROM Tiposervicio");
+            db?.execSQL("DELETE FROM Updcmd");
+            db?.execSQL("DELETE FROM Updsave");
+
+            db!!.setTransactionSuccessful()
+            db!!.endTransaction()
+
+            msgbox("¡Datos borrados!")
         } catch (e: java.lang.Exception) {
-            val se = e.message
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + se)
+            db!!.endTransaction()
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+        }
+
+    }
+
+    private fun sendDatabase() {
+        val subject: String
+        val body: String
+        val dir: String
+        val alias: String
+        try {
+            dir = storage + ""
+            //alias = gl.userid
+            subject = "Base de datos Servicio móvil "
+            body = "Base de datos adjunta"
+
+            var uri: Uri? = null
+            try {
+                val f1 = File(dir+"/servmov.db")
+                val f2 = File(dir+"/servmov_copia.db")
+                val f3 = File(dir+"/servmov.zip")
+
+                FileUtils.copyFile(f1, f2)
+                uri = FileProvider.getUriForFile(this, "$packageName.provider", f3)
+                app!!.zip(dir+"/servmov_copia.db",dir+"/servmov.zip")
+
+                val builder = VmPolicy.Builder()
+                StrictMode.setVmPolicy(builder.build())
+
+            } catch (e: IOException) {
+                msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+            }
+            val TO = arrayOf("dtsolutionsgt@gmail.com")
+            val emailIntent = Intent(Intent.ACTION_SEND)
+            emailIntent.data = Uri.parse("mailto:")
+            emailIntent.type = "text/plain"
+            emailIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            emailIntent.putExtra(Intent.EXTRA_EMAIL, TO)
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject)
+            emailIntent.putExtra(Intent.EXTRA_TEXT, body)
+            emailIntent.putExtra(Intent.EXTRA_STREAM, uri)
+            startActivity(emailIntent)
+        } catch (e: java.lang.Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+        }
+    }
+
+    private fun reescribirBaseDatos() {
+        try {
+            val dfile: String = fdown.getAbsolutePath() + "/servmov.db"
+            val f1 = File(dfile)
+            if (f1.exists()) {
+                copyFile(dfile, storage + "/servmovcopy.db")
+                msgask(4,"Aplicación se va a reiniciar para aplicar los cambios.")
+            } else {
+                msgbox("No existe archivo servmov.db en la carpeta de descargas")
+            }
+        } catch (e: java.lang.Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+        }
+    }
+
+    private fun reiniciarApp() {
+        try {
+            Con!!.close()
+            copyFile(storage + "/servmovcopy.db", storage + "/servmov.db")
+
+            val ctx = applicationContext
+            val pm = ctx.packageManager
+            val intent = pm.getLaunchIntentForPackage(ctx.packageName)
+            val mainIntent = Intent.makeRestartActivityTask(intent!!.component)
+            ctx.startActivity(mainIntent)
+            Runtime.getRuntime().exit(0)
+
+        } catch (e: java.lang.Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
         }
     }
 
@@ -330,8 +365,11 @@ class Session : PBase() {
     fun dialogswitch() {
         try {
             when (gl?.dialogid) {
-                0 -> {}
-                1 -> {}
+                0 -> { msgask(1,"¿Está seguro?") }
+                1 -> { limpiaTablas() }
+                2 -> { msgask(3,"¿Está seguro?") }
+                3 -> { reescribirBaseDatos() }
+                4 -> { reiniciarApp() }
             }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
@@ -363,7 +401,9 @@ class Session : PBase() {
     fun processMainMenu(menuidx:Int) {
         try {
             when (menuidx) {
-                0 -> { startActivity(Intent(this,Comunicacion::class.java)) }
+                0 -> {
+                    gl?.com_pend=false
+                    startActivity(Intent(this,Comunicacion::class.java)) }
                 1 -> { showSupportMenu() }
                 2 -> { ingresaEmpresa() }
             }
@@ -377,13 +417,16 @@ class Session : PBase() {
             val listdlg = extListDlg();
 
             listdlg.buildDialog(this@Session, "Menu soporte")
-            listdlg.setLines(5);
+            listdlg.setLines(4);
             listdlg.setWidth(-1)
             listdlg.setTopRightPosition()
 
-            listdlg.addData(1,"Guardar base de datos")
+            listdlg.addData(1,"Enviar base de datos")
+            listdlg.addData(2,"Recuperar base de datos")
+            listdlg.addData(3,"Guardar base de datos")
+            listdlg.addData(4,"Limpiar tablas")
 
-            listdlg.clickListener= Runnable { processSupportMenu(listdlg.selidx) }
+            listdlg.clickListener= Runnable { processSupportMenu(listdlg.selcodint) }
 
             listdlg.setOnLeftClick { v: View? -> listdlg.dismiss() }
             listdlg.show()
@@ -395,7 +438,10 @@ class Session : PBase() {
     fun processSupportMenu(menuidx:Int) {
         try {
             when (menuidx) {
-                0 -> { backupLocal() }
+                1 -> { sendDatabase() }
+                2 -> { if (CheckManageExternalStorage()) msgask(2,"¿Reescribir la base de datos actual?") }
+                3 -> { backupLocal() }
+                4 -> { msgask(0,"¿Borrar todos los datos de las tablas?") }
             }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -407,6 +453,65 @@ class Session : PBase() {
     //region Aux
 
     fun scripttables() {
+
+        try {
+            sql="CREATE TABLE [Ordenfoto] ("+
+                    "id INTEGER NOT NULL,"+
+                    "idOrden INTEGER NOT NULL,"+
+                    "nombre TEXT NOT NULL,"+
+                    "nota TEXT NOT NULL,"+
+                    "statcom INTEGER NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+
+            sql="CREATE INDEX Ordenfoto_idx1 ON Ordenfoto(idOrden)";db?.execSQL(sql)
+            sql="CREATE INDEX Ordenfoto_idx2 ON Ordenfoto(statcom)";db?.execSQL(sql)
+
+        } catch (e: Exception) {}
+
+        try {
+            sql="CREATE TABLE [Envioimagen] ("+
+                    "id TEXT NOT NULL,"+
+                    "tipo INTEGER NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+        } catch (e: Exception) {}
+
+        try {
+            sql="CREATE TABLE [Updsave] ("+
+                    "id INTEGER NOT NULL,"+
+                    "cmd TEXT NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+
+        } catch (e: Exception) {}
+
+        try {
+            sql="CREATE TABLE [Updcmd] ("+
+                    "id INTEGER NOT NULL,"+
+                    "cmd TEXT NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+        } catch (e: Exception) {}
+
+        try {
+
+            sql="CREATE TABLE [Syntaxlog] ("+
+                    "id INTEGER NOT NULL,"+
+                    "fecha INTEGER NOT NULL,"+
+                    "cmd TEXT NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+
+            sql="CREATE INDEX Syntaxlog_idx1 ON Syntaxlog(fecha)";db?.execSQL(sql)
+        } catch (e: Exception) {}
+
+
 
         try {
 
@@ -476,6 +581,26 @@ class Session : PBase() {
         }
     }
 
+    //endregion
+
+    //region MANAGE_EXTERNAL_STORAGE
+
+    fun CheckManageExternalStorage():Boolean {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    return true
+                } else {
+                    val uri = Uri.parse("package:" + packageName)
+                    startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,uri))
+                    return false
+                }
+            } else return true
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+        return true
+    }
 
     //endregion
 

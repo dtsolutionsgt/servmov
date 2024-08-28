@@ -156,7 +156,7 @@ class MiscUtils {
         val dialog = AlertDialog.Builder(cont)
         dialog.setTitle(R.string.app_name)
         dialog.setMessage(msg)
-        dialog.setPositiveButton("Yes") { dialog, which ->
+        dialog.setPositiveButton("Si") { dialog, which ->
             if (gl!!.dialogr != null) {
                 gl!!.dialogr!!.run()
             }

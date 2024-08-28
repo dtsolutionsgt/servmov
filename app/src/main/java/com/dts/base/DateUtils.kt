@@ -218,6 +218,40 @@ class DateUtils {
         return TimeUnit.MILLISECONDS.toDays(diffInMillisec).toInt()
     }
 
+    fun minDiff(f1: Long, f2: Long): Int {
+        var f1 = f1
+        var f2 = f2
+        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        var date1: Date? = null
+        var date2: Date? = null
+        val fd: Long
+        if (f1 <= 0) return -1
+        if (f2 <= 0) return -1
+        if (f1 < f2) {
+            fd = f1
+            f1 = f2
+            f2 = fd
+        }
+        date1 = try {
+            var sf1=sfecha(f1)+" "+shora(f1)
+            sdf.parse(sf1)
+        } catch (e: Exception) {
+            return -1
+        }
+        date2 = try {
+            var sf2=sfecha(f2)+" "+shora(f2)
+            sdf.parse(sf2)
+        } catch (e: Exception) {
+            return -1
+        }
+
+        val d1ms=date1!!.time;
+        val d2ms=date2!!.time;
+
+        val diffInMillisec = d1ms - d2ms
+        return TimeUnit.MILLISECONDS.toMinutes(diffInMillisec).toInt()
+    }
+
     fun univfecha(f: Long): String {
         var f = f
         val vy: Long
@@ -228,11 +262,11 @@ class DateUtils {
         var s: String
 
         //yyyyMMdd hh:mm:ss
-        vy = (f.toInt() / 100000000).toLong()
+        vy = (f / 100000000).toLong()
         f = f % 100000000
-        vm = (f.toInt() / 1000000).toLong()
+        vm = (f / 1000000).toLong()
         f = f % 1000000
-        vd = (f.toInt() / 10000).toLong()
+        vd = (f / 10000).toLong()
         f = f % 10000
         h = (f.toInt() / 100).toLong()
         m = f % 100
@@ -264,8 +298,7 @@ class DateUtils {
         s = "" + vy
         s = if (vm > 9) s + vm else s + "0" + vm
         s = if (vd > 9) s + vd else s + "0" + vd
-        s =
-            "$vy $vm:$vd:00" //#HS_20181128_1102 Agregue " "+vm+":"+vd+":00" para que devolviera la hora.
+        s ="$vy $vm:$vd:00" //#HS_20181128_1102 Agregue " "+vm+":"+vd+":00" para que devolviera la hora.
         return s
     }
 

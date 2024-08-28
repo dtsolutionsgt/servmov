@@ -1,21 +1,28 @@
 package com.dts.sermov
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.core.view.isVisible
 import com.dts.base.clsClasses
 import com.dts.base.clsClasses.clsOrdenenc
 import com.dts.base.clsClasses.clsUsuario
+import com.dts.classes.clsEnvioimagenObj
 import com.dts.classes.clsEstadoordenObj
 import com.dts.classes.clsOrdenclienteObj
 import com.dts.classes.clsOrdencontObj
 import com.dts.classes.clsOrdendetObj
 import com.dts.classes.clsOrdendirObj
 import com.dts.classes.clsOrdenencObj
+import com.dts.classes.clsOrdenfotoObj
 import com.dts.classes.clsTipoordenObj
+import com.dts.classes.clsUpdsaveObj
 import com.dts.classes.clsUsuarioObj
 import com.dts.webapi.ClassesAPI
 import com.dts.webapi.HttpClient
@@ -30,7 +37,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class Comunicacion : PBase() {
 
     var lblstat: TextView? = null
+    var relcom: RelativeLayout? = null
     var pbar: ProgressBar? = null
+    var lblp1: TextView? = null
+    var lblp2: TextView? = null
+    var lblp3: TextView? = null
+    var imgpend: ImageView? = null
 
     var http: HttpClient? = null
     var gson = Gson()
@@ -43,12 +55,18 @@ class Comunicacion : PBase() {
     var OrdencontObj: clsOrdencontObj? = null
     var OrdendirObj: clsOrdendirObj? = null
     var OrdendetObj: clsOrdendetObj? = null
+    var UpdsaveObj: clsUpdsaveObj? = null
+    var OrdenfotoObj: clsOrdenfotoObj? = null
 
     var updrem = ArrayList<String>()
     var updloc = ArrayList<String>()
 
+    var selupd = clsClasses.clsUpdsave()
+
     var updpos=0
     var updsize=0
+    var lpos=0
+    var lsize=0
     var updcerrar=false
     var upderrs=0
     var upderr=""
@@ -56,6 +74,7 @@ class Comunicacion : PBase() {
     var sqlloc=""
 
     var idle=true
+    var enccnt=0
     var errcnt=0
 
     val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
@@ -68,7 +87,12 @@ class Comunicacion : PBase() {
             super.initbase(savedInstanceState)
 
             lblstat = findViewById(R.id.textView10);lblstat?.text=""
+            relcom = findViewById(R.id.relcom);
             pbar = findViewById(R.id.progressBar2);pbar?.visibility=View.INVISIBLE
+            lblp1 = findViewById(R.id.textView32);lblp1?.text=""
+            lblp2 = findViewById(R.id.textView33);lblp2?.text=""
+            lblp3 = findViewById(R.id.textView34);lblp3?.text=""
+            imgpend = findViewById(R.id.imageView29);imgpend?.isVisible=false
 
             http = HttpClient()
 
@@ -80,6 +104,21 @@ class Comunicacion : PBase() {
             OrdendirObj = clsOrdendirObj(this, Con!!, db!!)
             OrdencontObj = clsOrdencontObj(this, Con!!, db!!)
             OrdendetObj = clsOrdendetObj(this, Con!!, db!!)
+            OrdenfotoObj = clsOrdenfotoObj(this, Con!!, db!!)
+            UpdsaveObj= clsUpdsaveObj(this,Con!!,db!!)
+
+            registrosOffline()
+
+            if (app?.sinInternet()!!) {
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({ finish() }, 1000)
+            }
+
+            if (gl?.com_pend!!) {
+                relcom?.isVisible=false
+                runOnUiThread {lblstat?.text = "Enviando pendientes . . ."}
+                enviaEncabezados()
+            }
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -94,7 +133,7 @@ class Comunicacion : PBase() {
     }
 
     fun doExit(view: View) {
-        if (idle) finish() else toast("Espere, por favor . . . ")
+        if (idle) finishCom() else toast("Espere, por favor . . . ")
     }
 
     //endregion
@@ -350,6 +389,8 @@ class Comunicacion : PBase() {
             val parsedList =http?.splitJsonArray()
             val RType = object : TypeToken<ClassesAPI.clsAPIOrdenEnc>() {}.type
 
+            enccnt=0
+
             try {
                 db!!.beginTransaction()
 
@@ -390,6 +431,7 @@ class Comunicacion : PBase() {
                         msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
                     }
 
+                    enccnt++
                 }
 
                 db!!.setTransactionSuccessful()
@@ -398,6 +440,7 @@ class Comunicacion : PBase() {
                 db!!.endTransaction()
                 msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
                 errcnt++
+                enccnt=0
             }
 
             val handler = Handler(Looper.getMainLooper())
@@ -698,7 +741,7 @@ class Comunicacion : PBase() {
 
             }
 
-            finok()
+            enviaEncabezados()
         } catch (e: java.lang.Exception) {
             var es=e.message
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
@@ -707,27 +750,105 @@ class Comunicacion : PBase() {
 
     //endregion
 
-    //region Envio estado
+    //region Envio encabezados
 
-    fun sendUpdateOld() {
+    fun enviaEncabezados() {
         try {
-            sqlrem=updrem.get(updpos)
-            sqlloc=updloc.get(updpos)
+            UpdsaveObj?.fill()
+            if (UpdsaveObj?.count!!>0) {
+                idle=false
+                lsize=UpdsaveObj?.count!!;lpos=0
 
-            http?.url=gl?.urlbase+"api/Orden/GetUpdate?SQL="+sqlrem
+                procesaEncabezado()
+            } else {
+                enviaFotos()
+            }
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+            enviaFotos()
+        }
+    }
 
+    fun procesaEncabezado() {
+        try {
+            if (lpos<lsize) {
+                selupd=UpdsaveObj?.items?.get(lpos)!!
+                var cmd=selupd.cmd;
+                cmd=cmd.replace("´","'")
+                sendUpdateEnc(cmd)
+            } else {
+                enviaFotos()
+            }
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+            enviaFotos()
+        }
+    }
+
+    fun sendUpdateEnc(usql:String) {
+        try {
+            val jupd=clsClasses.clsUpdate(usql)
+            val pbody = gson.toJson(jupd)
+            val body: RequestBody = pbody.toRequestBody(mediaType)
+
+            http?.url=gl?.urlbase+"api/Orden/Update"
 
             val request: Request = Request.Builder()
-                .url(http?.url!!).get()
+                .url(http?.url!!)
+                .post(body)
                 .addHeader("accept", "*/*")
                 .build()
 
-
-            http!!.processRequest(request, { cbUpdate() })
+            http!!.processRequest(request, { cbUpdateEnc() })
         } catch (e: java.lang.Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);
         }
     }
+
+    fun cbUpdateEnc() {
+        try {
+            var retcode=http?.retcode!!
+            var retmsg=http?.data.toString()
+            if (retcode>-1) {
+                try {
+                    //UpdsaveObj?.delete(selupd)
+                } catch (e: Exception) { }
+            }
+        } catch (e: java.lang.Exception) {
+            runOnUiThread { toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message) }
+        }
+
+        lpos++
+        try {
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({ procesaEncabezado() }, 200)
+        } catch (e: Exception) {
+            runOnUiThread { toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message) }
+        }
+    }
+
+
+    //endregion
+
+    //region Envio fotos
+
+    fun enviaFotos() {
+        try {
+            UpdsaveObj?.fill()
+            if (UpdsaveObj?.count==0) {
+                finok()
+            } else {
+                finok()
+            }
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+            finok()
+        }
+    }
+
+    //endregion
+
+    //region Envio Confirmacion
 
     fun sendUpdate() {
         try {
@@ -779,7 +900,7 @@ class Comunicacion : PBase() {
                 handler.postDelayed({sendUpdate()}, 200)
             } else {
                 if (upderrs==0) {
-                    finish()
+                    finishCom()
                 } else {
                     msgbox("Actualizacion de estado con error: \n"+upderr)
                 }
@@ -798,11 +919,11 @@ class Comunicacion : PBase() {
                 updsize=updrem.size-1
                 sendUpdate()
             } else {
-                if (updcerrar) finish()
+                if (updcerrar) finishCom()
             }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
-            if (updcerrar) finish()
+            if (updcerrar) finishCom()
         }
     }
 
@@ -832,7 +953,7 @@ class Comunicacion : PBase() {
 
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed({
-            toast("Sincronización completa.")
+            toastlong("Ordenes recibidos: "+enccnt)
             envioConfirmacion(true)
         }, 1500)
     }
@@ -842,6 +963,50 @@ class Comunicacion : PBase() {
         lblstat?.text="Sincronización termino con error."
         pbar?.visibility=View.INVISIBLE
         envioConfirmacion(false)
+    }
+
+    fun finishCom() {
+        try {
+
+            var EnvioimagenObj = clsEnvioimagenObj(this, Con!!, db!!)
+            EnvioimagenObj?.fill()
+
+            if (EnvioimagenObj?.count!!>0) {
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({
+                    startActivity(Intent(this, EnvioImagenes::class.java))
+                }, 200)
+            }
+
+        } catch (e: Exception) {
+            toastlong(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+
+
+        finish()
+    }
+
+    fun registrosOffline() {
+        try {
+            var EnvioimagenObj= clsEnvioimagenObj(this,Con!!,db!!)
+
+            UpdsaveObj?.fill()
+            OrdenfotoObj?.fill("WHERE (statcom=0)")
+            EnvioimagenObj.fill()
+
+            var cupd=UpdsaveObj?.count
+            var cfot=OrdenfotoObj?.count
+            var cimg=EnvioimagenObj?.count
+
+            imgpend?.isVisible=(cupd!! + cfot!! + cimg!!)>0
+            lblp1?.text=""+cupd
+            lblp2?.text=""+cfot
+            lblp3?.text=""+cimg
+
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+
     }
 
     //endregion
@@ -861,6 +1026,8 @@ class Comunicacion : PBase() {
             OrdendirObj!!.reconnect(Con!!, db!!)
             OrdencontObj!!.reconnect(Con!!, db!!)
             OrdendetObj!!.reconnect(Con!!, db!!)
+            OrdenfotoObj!!.reconnect(Con!!, db!!)
+            UpdsaveObj!!.reconnect(Con!!, db!!)
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)

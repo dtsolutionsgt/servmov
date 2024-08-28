@@ -34,7 +34,9 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= 20) {
                 if (Build.VERSION.SDK_INT > 30) {
                     if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) === PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.CALL_PHONE) === PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(Manifest.permission.CAMERA) === PackageManager.PERMISSION_GRANTED
                        ) {
                         startApp()
@@ -42,13 +44,17 @@ class MainActivity : AppCompatActivity() {
                         ActivityCompat.requestPermissions(
                             this, arrayOf(
                                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
                                 Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.CALL_PHONE,
                                 Manifest.permission.CAMERA
                             ), 1 )
                     }
                 } else {
                     if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) === PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.CALL_PHONE) === PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(Manifest.permission.CAMERA) === PackageManager.PERMISSION_GRANTED
                     ) {
                         startApp()
@@ -56,13 +62,16 @@ class MainActivity : AppCompatActivity() {
                         ActivityCompat.requestPermissions(
                             this, arrayOf(
                                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
                                 Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.CALL_PHONE,
                                 Manifest.permission.CAMERA
                             ), 1 )
                     }
                 }
             }
         } catch (e: java.lang.Exception) {
+            var se=e.message
         }
     }
 
@@ -71,8 +80,9 @@ class MainActivity : AppCompatActivity() {
         try {
             if (Build.VERSION.SDK_INT > 30) {
                 if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.MANAGE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) === PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.CALL_PHONE) === PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(Manifest.permission.CAMERA) === PackageManager.PERMISSION_GRANTED
                 ) {
                     startApp()
@@ -81,8 +91,9 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.MANAGE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) === PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.CALL_PHONE) === PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(Manifest.permission.CAMERA) === PackageManager.PERMISSION_GRANTED
                 ) {
                     startApp()
@@ -91,49 +102,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } catch (e: java.lang.Exception) {
-
+            var se=e.message
         }
     }
 
-
-    private fun grantPermissionsOld() {
-        try {
-            if (Build.VERSION.SDK_INT >= 23) {
-                if (checkSelfPermission(Manifest.permission.MANAGE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) === PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) === PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.CAMERA) === PackageManager.PERMISSION_GRANTED
-                )  {
-                    startApp()
-                } else {
-                    ActivityCompat.requestPermissions(
-                        this, arrayOf(
-                            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.CAMERA
-                        ), 1
-                    )
-
-                }
-            } else {
-                startApp()
-            }
-        } catch (e: Exception) {
-        }
-    }
-
-    fun onRequestPermissionsResultOld(requestCode: Int, permissions: Array<String>, grantResults: IntArray  ) {
-        try {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                startApp()
-            } else {
-                startApp()
-                //Toast.makeText(this, "Permission not granted.", Toast.LENGTH_LONG).show();super.finish();
-            }
-        } catch (e: Exception) {
-        }
-    }
 
     private fun startApp() {
         try {

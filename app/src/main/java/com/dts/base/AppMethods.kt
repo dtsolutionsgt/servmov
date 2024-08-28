@@ -48,6 +48,42 @@ class AppMethods( private val cont: Context, private val gl: appGlobals,
 
     //region Public
 
+    @Throws(IOException::class)
+    fun buildEncUpdate(cap: clsClasses.clsOrdenenccap, idest:Int, fs: String):String {
+
+        upd!!.init("D_ORDEN_SERVICIO_ENC")
+
+        upd!!.add("CODIGO_ESTADO_ORDEN_SERVICIO",idest)
+
+        when (idest) {
+            0 -> {
+                upd!!.add("ANULADA",1)
+                upd!!.add("ACTIVA",0)
+                upd!!.add("CERRADA",1)
+            }
+            4 -> {
+                upd!!.add("ANULADA",0)
+                upd!!.add("ACTIVA",1)
+                upd!!.add("CERRADA",0)
+                upd!!.add("COORDENADA_X",cap.longit)
+                upd!!.add("COORDENADA_Y",cap.latit)
+                upd!!.add("HORA_INICIO_HH",fs)
+            }
+            5 -> {
+                upd!!.add("ANULADA",0)
+                upd!!.add("ACTIVA",1)
+                upd!!.add("CERRADA",1)
+                upd!!.add("HORA_FIN_HH",fs)
+            }
+        }
+
+        var nota=cap.nota;nota=nota.replace("´","")
+        upd!!.add("OBSERVACION",nota)
+
+        upd!!.Where("(CODIGO_ORDEN_SERVICIO=" + cap.idorden + ")")
+
+        return upd!!.sql()
+    }
 
     //endregion
 
@@ -63,7 +99,7 @@ class AppMethods( private val cont: Context, private val gl: appGlobals,
         if (checkInternet()) {
             return false
         } else {
-            toast("¡Sin conexión al internet!");return true;
+            toast("Sin conexión al internet.");return true;
         }
     }
 

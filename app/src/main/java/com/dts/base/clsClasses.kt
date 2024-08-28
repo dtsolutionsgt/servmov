@@ -4,6 +4,11 @@ package com.dts.base
 class clsClasses {
 
 
+    data class clsEnvioimagen (
+        var id : String = "",
+        var tipo : Int = 0,
+    )
+
     data class clsEstadoorden (
         var id : Int = 0,
         var nombre : String = "",
@@ -89,6 +94,14 @@ class clsClasses {
         var hora_fin : Long = 0L,
     )
 
+    data class clsOrdenfoto (
+        var id : Int = 0,
+        var idorden : Int = 0,
+        var nombre : String = "",
+        var nota : String = "",
+        var statcom : Int = 0,
+    )
+
     data class clsOrdenlist (
         var idorden : Int = 0,
         var tarea : String = "",
@@ -114,6 +127,16 @@ class clsClasses {
         var id : Int = 0,
         var idticket : Int = 0,
         var nombre : String = "",
+    )
+
+    data class clsUpdcmd (
+        var id : Int = 0,
+        var cmd : String = "",
+    )
+
+    data class clsUpdsave (
+        var id : Int = 0,
+        var cmd : String = "",
     )
 
     data class clsUsuario (

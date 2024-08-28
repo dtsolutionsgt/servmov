@@ -26,6 +26,8 @@ import com.dts.base.clsClasses
 class extListDlg {
 
     var selidx=-1
+    var selcod=""
+    var selcodint=0
 
     private var mList: RecyclerView? = null
 
@@ -92,6 +94,18 @@ class extListDlg {
                         selidx=-1
                     }
 
+                    try {
+                        selcod= data.get(position).codigo
+                    } catch (e: Exception) {
+                        selcod=""
+                    }
+
+                    try {
+                        selcodint=data.get(position).codigo.toInt()
+                    } catch (e: Exception) {
+                        selcodint=-1
+                    }
+
                     runClickListener()
 
                 }
@@ -155,6 +169,13 @@ class extListDlg {
         val window = dialog!!.window
         val wlp = window!!.attributes
         wlp.gravity = Gravity.TOP or Gravity.RIGHT
+        window.attributes = wlp
+    }
+
+    fun setCenterScreenPosition() {
+        val window = dialog!!.window
+        val wlp = window!!.attributes
+        wlp.gravity = Gravity.CENTER
         window.attributes = wlp
     }
 

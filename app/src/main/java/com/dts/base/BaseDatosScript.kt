@@ -21,105 +21,137 @@ class BaseDatosScript(private val vcontext: Context) {
 
         try {
 
-            sql="CREATE TABLE [Estadoorden] ("+
-                    "id INTEGER NOT NULL,"+
-                    "nombre TEXT NOT NULL,"+
-                    "PRIMARY KEY ([id])"+
+            sql = "CREATE TABLE [Envioimagen] (" +
+                    "id TEXT NOT NULL," +
+                    "tipo INTEGER NOT NULL," +
+                    "PRIMARY KEY ([id])" +
                     ");";
             db?.execSQL(sql);
 
-            sql="CREATE TABLE [Ordenenccap] ("+
-                    "idOrden INTEGER NOT NULL,"+
-                    "Anulada INTEGER NOT NULL,"+
-                    "Activa INTEGER NOT NULL,"+
-                    "Cerrada INTEGER NOT NULL,"+
-                    "FirmaUsuario TEXT NOT NULL,"+
-                    "FirmaCliente TEXT NOT NULL,"+
-                    "Latit REAL NOT NULL,"+
-                    "Longit REAL NOT NULL,"+
-                    "FechaIni INTEGER NOT NULL,"+
-                    "FechaFin INTEGER NOT NULL,"+
-                    "Nota TEXT NOT NULL,"+
-                    "Recibido INTEGER NOT NULL,"+
-                    "PRIMARY KEY ([idOrden])"+
+            sql = "CREATE TABLE [Estadoorden] (" +
+                    "id INTEGER NOT NULL," +
+                    "nombre TEXT NOT NULL," +
+                    "PRIMARY KEY ([id])" +
                     ");";
             db?.execSQL(sql);
 
-
-            sql="CREATE TABLE [Ordencliente] ("+
-                    "id INTEGER NOT NULL,"+
-                    "nombre TEXT NOT NULL,"+
-                    "dir TEXT NOT NULL,"+
-                    "tel TEXT NOT NULL,"+
-                    "PRIMARY KEY ([id])"+
-                    ");";
-            db?.execSQL(sql);
-
-
-            sql="CREATE TABLE [Ordencont] ("+
-                    "id INTEGER NOT NULL,"+
-                    "idcliente INTEGER NOT NULL,"+
-                    "nombre TEXT NOT NULL,"+
-                    "dir TEXT NOT NULL,"+
-                    "tel TEXT NOT NULL,"+
-                    "PRIMARY KEY ([id])"+
+            sql = "CREATE TABLE [Ordenenccap] (" +
+                    "idOrden INTEGER NOT NULL," +
+                    "Anulada INTEGER NOT NULL," +
+                    "Activa INTEGER NOT NULL," +
+                    "Cerrada INTEGER NOT NULL," +
+                    "FirmaUsuario TEXT NOT NULL," +
+                    "FirmaCliente TEXT NOT NULL," +
+                    "Latit REAL NOT NULL," +
+                    "Longit REAL NOT NULL," +
+                    "FechaIni INTEGER NOT NULL," +
+                    "FechaFin INTEGER NOT NULL," +
+                    "Nota TEXT NOT NULL," +
+                    "Recibido INTEGER NOT NULL," +
+                    "PRIMARY KEY ([idOrden])" +
                     ");";
             db?.execSQL(sql);
 
 
-            sql="CREATE TABLE [Ordendet] ("+
-                    "id INTEGER NOT NULL,"+
-                    "idOrden INTEGER NOT NULL,"+
-                    "idProducto INTEGER NOT NULL,"+
-                    "Descripcion TEXT NOT NULL,"+
-                    "Realizado INTEGER NOT NULL,"+
-                    "Cant REAL NOT NULL,"+
-                    "Activo INTEGER NOT NULL,"+
-                    "PRIMARY KEY ([id])"+
+            sql = "CREATE TABLE [Ordencliente] (" +
+                    "id INTEGER NOT NULL," +
+                    "nombre TEXT NOT NULL," +
+                    "dir TEXT NOT NULL," +
+                    "tel TEXT NOT NULL," +
+                    "PRIMARY KEY ([id])" +
                     ");";
             db?.execSQL(sql);
 
 
-            sql="CREATE TABLE [Ordendir] ("+
-                    "id INTEGER NOT NULL,"+
-                    "idcliente INTEGER NOT NULL,"+
-                    "referencia TEXT NOT NULL,"+
-                    "dir TEXT NOT NULL,"+
-                    "zona TEXT NOT NULL,"+
-                    "tel TEXT NOT NULL,"+
-                    "PRIMARY KEY ([id])"+
+            sql = "CREATE TABLE [Ordencont] (" +
+                    "id INTEGER NOT NULL," +
+                    "idcliente INTEGER NOT NULL," +
+                    "nombre TEXT NOT NULL," +
+                    "dir TEXT NOT NULL," +
+                    "tel TEXT NOT NULL," +
+                    "PRIMARY KEY ([id])" +
                     ");";
             db?.execSQL(sql);
 
 
-            sql="CREATE TABLE [Ordenenc] ("+
-                    "idOrden INTEGER NOT NULL,"+
-                    "Numero TEXT NOT NULL,"+
-                    "Fecha INTEGER NOT NULL,"+
-                    "idUsuario INTEGER NOT NULL,"+
-                    "idEstado INTEGER NOT NULL,"+
-                    "idTipo INTEGER NOT NULL,"+
-                    "idCliContact INTEGER NOT NULL,"+
-                    "idDir INTEGER NOT NULL,"+
-                    "idCliente INTEGER NOT NULL,"+
-                    "descripcion TEXT NOT NULL,"+
-                    "fecha_cierre INTEGER NOT NULL,"+
-                    "hora_ini INTEGER NOT NULL,"+
-                    "hora_fin INTEGER NOT NULL,"+
-                    "PRIMARY KEY ([idOrden])"+
+            sql = "CREATE TABLE [Ordendet] (" +
+                    "id INTEGER NOT NULL," +
+                    "idOrden INTEGER NOT NULL," +
+                    "idProducto INTEGER NOT NULL," +
+                    "Descripcion TEXT NOT NULL," +
+                    "Realizado INTEGER NOT NULL," +
+                    "Cant REAL NOT NULL," +
+                    "Activo INTEGER NOT NULL," +
+                    "PRIMARY KEY ([id])" +
                     ");";
             db?.execSQL(sql);
 
-            sql="CREATE INDEX Ordenenc_idx1 ON Ordenenc(Fecha)";db?.execSQL(sql)
-            sql="CREATE INDEX Ordenenc_idx2 ON Ordenenc(idEstado)";db?.execSQL(sql)
+
+            sql = "CREATE TABLE [Ordendir] (" +
+                    "id INTEGER NOT NULL," +
+                    "idcliente INTEGER NOT NULL," +
+                    "referencia TEXT NOT NULL," +
+                    "dir TEXT NOT NULL," +
+                    "zona TEXT NOT NULL," +
+                    "tel TEXT NOT NULL," +
+                    "PRIMARY KEY ([id])" +
+                    ");";
+            db?.execSQL(sql);
 
 
-            sql="CREATE TABLE [Savepos] ("+
-                    "id INTEGER NOT NULL,"+
-                    "valor TEXT NOT NULL,"+
-                    "PRIMARY KEY ([id])"+
+            sql = "CREATE TABLE [Ordenenc] (" +
+                    "idOrden INTEGER NOT NULL," +
+                    "Numero TEXT NOT NULL," +
+                    "Fecha INTEGER NOT NULL," +
+                    "idUsuario INTEGER NOT NULL," +
+                    "idEstado INTEGER NOT NULL," +
+                    "idTipo INTEGER NOT NULL," +
+                    "idCliContact INTEGER NOT NULL," +
+                    "idDir INTEGER NOT NULL," +
+                    "idCliente INTEGER NOT NULL," +
+                    "descripcion TEXT NOT NULL," +
+                    "fecha_cierre INTEGER NOT NULL," +
+                    "hora_ini INTEGER NOT NULL," +
+                    "hora_fin INTEGER NOT NULL," +
+                    "PRIMARY KEY ([idOrden])" +
+                    ");";
+            db?.execSQL(sql);
+
+            sql = "CREATE INDEX Ordenenc_idx1 ON Ordenenc(Fecha)";db?.execSQL(sql)
+            sql = "CREATE INDEX Ordenenc_idx2 ON Ordenenc(idEstado)";db?.execSQL(sql)
+
+
+            sql = "CREATE TABLE [Ordenfoto] (" +
+                    "id INTEGER NOT NULL," +
+                    "idOrden INTEGER NOT NULL," +
+                    "nombre TEXT NOT NULL," +
+                    "nota TEXT NOT NULL," +
+                    "statcom INTEGER NOT NULL," +
+                    "PRIMARY KEY ([id])" +
+                    ");";
+            db?.execSQL(sql);
+
+            sql = "CREATE INDEX Ordenfoto_idx1 ON Ordenfoto(idOrden)";db?.execSQL(sql)
+            sql = "CREATE INDEX Ordenfoto_idx2 ON Ordenfoto(statcom)";db?.execSQL(sql)
+
+
+            sql = "CREATE TABLE [Savepos] (" +
+                    "id INTEGER NOT NULL," +
+                    "valor TEXT NOT NULL," +
+                    "PRIMARY KEY ([id])" +
                     ");";
             db.execSQL(sql);
+
+
+            sql="CREATE TABLE [Syntaxlog] ("+
+                    "id INTEGER NOT NULL,"+
+                    "fecha INTEGER NOT NULL,"+
+                    "cmd TEXT NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+
+            sql="CREATE INDEX Syntaxlog_idx1 ON Syntaxlog(fecha)";db?.execSQL(sql)
 
 
             sql="CREATE TABLE [Tipoorden] ("+
@@ -134,6 +166,20 @@ class BaseDatosScript(private val vcontext: Context) {
                     "id INTEGER NOT NULL,"+
                     "idticket INTEGER NOT NULL,"+
                     "nombre TEXT NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+
+            sql="CREATE TABLE [Updcmd] ("+
+                    "id INTEGER NOT NULL,"+
+                    "cmd TEXT NOT NULL,"+
+                    "PRIMARY KEY ([id])"+
+                    ");";
+            db?.execSQL(sql);
+
+            sql="CREATE TABLE [Updsave] ("+
+                    "id INTEGER NOT NULL,"+
+                    "cmd TEXT NOT NULL,"+
                     "PRIMARY KEY ([id])"+
                     ");";
             db?.execSQL(sql);

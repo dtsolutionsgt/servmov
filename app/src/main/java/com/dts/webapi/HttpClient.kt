@@ -41,7 +41,7 @@ class HttpClient {
                     data = response.body!!.string()
                     retcode = 1
                 } else {
-                    data = "" + response.code
+                    data = "" + response.code + " " + response.message
                     retcode = 0
                 }
                 rnCallback!!.run()

@@ -71,7 +71,7 @@ class BaseDatos(context: Context, dbname: String?) : SQLiteOpenHelper(context, d
                 if (pField === "") return
                 if (pTipo === "") return
                 pValue = pValue.replace("'", "")
-                SV = "'$pValue'"
+                SV = "'"+pValue+"'"
                 if (pTipo === "S") SV = "'$pValue'"
                 if (pTipo === "N") SV = pValue
                 clFList.add(pField)
@@ -86,7 +86,7 @@ class BaseDatos(context: Context, dbname: String?) : SQLiteOpenHelper(context, d
             try {
                 if (pField === "") return
                 pValue = pValue.replace("'", "")
-                SV = "'$pValue'"
+                SV = "'"+pValue+"'"
                 clFList.add(pField)
                 clVList.add(SV)
             } catch (e: Exception) {
@@ -174,7 +174,7 @@ class BaseDatos(context: Context, dbname: String?) : SQLiteOpenHelper(context, d
                 if (pField === "") return
                 if (pTipo === "") return
                 pValue = pValue.replace("'", "")
-                SV = "'$pValue'"
+                SV = "'"+pValue+"'"
                 if (pTipo === "S") SV = "'$pValue'"
                 if (pTipo === "N") SV = pValue
                 clFList.add("$pField = $SV")
@@ -188,7 +188,7 @@ class BaseDatos(context: Context, dbname: String?) : SQLiteOpenHelper(context, d
             try {
                 if (pField === "") return
                 pValue = pValue.replace("'", "")
-                SV = "'$pValue'"
+                SV = "'"+pValue+"'"
                 clFList.add("$pField = $SV")
             } catch (e: Exception) {
             }
