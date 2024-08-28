@@ -197,9 +197,9 @@ class Tarea : PBase() {
                 .addHeader("accept", "*/*")
                 .build()
 
-            http!!.processRequest(request, { cbUsuarios() })
+            //http!!.processRequest(request, { cbUsuarios() })
         } catch (e: java.lang.Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
+            //msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
         }
 
 
