@@ -1,7 +1,13 @@
 package com.dts.sermov
 
+import android.app.AlertDialog
+import android.content.DialogInterface
+import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
+import android.widget.EditText
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dts.base.clsClasses
@@ -20,6 +26,8 @@ class UsuarioLista : PBase() {
     var UsuarioObj: clsUsuarioObj? = null
 
     var items = ArrayList<clsClasses.clsUsuario>()
+
+    var iduser=0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -55,7 +63,8 @@ class UsuarioLista : PBase() {
                     object : RecyclerItemClickListener.OnItemClickListener {
 
                         override fun onItemClick(view: View, position: Int) {
-                            saveitem(items.get(position).id)
+                            iduser=items.get(position).id
+                            ingresoClave(items.get(position).clave)
                         }
 
                         override fun onItemLongClick(view: View?, position: Int) { }
@@ -72,6 +81,8 @@ class UsuarioLista : PBase() {
     //region Main
 
     fun listItems() {
+        val tnivel = listOf(2,3,4,5,6,7)
+
         try {
 
             UsuarioObj?.fill("ORDER BY Nombre")
@@ -79,7 +90,8 @@ class UsuarioLista : PBase() {
             items.clear()
 
             for (item in UsuarioObj?.items!!) {
-                if (item.nombre.indexOf("loquead")<0) items.add(item)
+                if (item.nombre.indexOf("loquead")<0)
+                    if (item.rol in tnivel) items.add(item)
             }
 
             adapter = LA_UsuarioAdapter(items!!)
@@ -90,15 +102,19 @@ class UsuarioLista : PBase() {
         }
     }
 
-    fun saveitem(iditem: Int) {
+    fun saveItem() {
         var item = clsClasses.clsSavepos()
 
         try {
+            if (iduser==0) {
+                msgbox("Usuario incorrecto");return
+            }
+
             val SaveposObj = clsSaveposObj(this, Con!!, db!!)
 
             try {
                 item.id=1
-                item.valor=""+iditem
+                item.valor=""+iduser
 
                 SaveposObj.add(item)
             } catch (e: Exception) {
@@ -120,6 +136,43 @@ class UsuarioLista : PBase() {
 
     //region Aux
 
+    private fun ingresoClave(sclave:String) {
+        var clave=0
+
+        try {
+            clave=sclave.toInt()
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message);return
+        }
+
+        val alert: AlertDialog.Builder = AlertDialog.Builder(this)
+        alert.setTitle("Ingrese contraseña")
+        val input = EditText(this)
+        alert.setView(input)
+
+        input.inputType = InputType.TYPE_CLASS_NUMBER
+        input.setText("")
+        input.requestFocus()
+
+        alert.setPositiveButton("Aplicar",
+            DialogInterface.OnClickListener { dialog, whichButton ->
+                try {
+                    val ide = Integer.parseInt(input.text.toString())
+                    if (ide!=clave) throw Exception()
+
+                    saveItem()
+                } catch (e: java.lang.Exception) {
+                    mu!!.msgbox("Contraseña incorrecta")
+                    return@OnClickListener
+                }
+            })
+        alert.setNegativeButton("Cancelar", DialogInterface.OnClickListener { dialog, whichButton -> })
+
+        val dialog: AlertDialog = alert.create()
+        dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLACK)
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK)
+    }
 
     //endregion
 

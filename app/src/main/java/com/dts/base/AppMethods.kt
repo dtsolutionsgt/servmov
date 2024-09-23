@@ -10,9 +10,8 @@ import android.os.Build
 import android.util.Patterns
 import android.view.Gravity
 import android.widget.Toast
-
 import com.dts.base.BaseDatos.Update
-import com.dts.base.clsClasses
+import com.dts.classes.clsParamObj
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -25,6 +24,7 @@ import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+
 
 class AppMethods( private val cont: Context, private val gl: appGlobals,
                   private var Con: BaseDatos, private var db: SQLiteDatabase) {
@@ -47,6 +47,87 @@ class AppMethods( private val cont: Context, private val gl: appGlobals,
     }
 
     //region Public
+
+    fun params() {
+        var idparam=0
+
+        try {
+            var ParamObj = clsParamObj(cont, Con, db)
+
+            try {
+                idparam=1
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.pegps=ParamObj?.first()?.valor?.toUpperCase(Locale.getDefault())=="S"
+            } catch (e: Exception) {
+                gl?.pegps=false
+            }
+
+            try {
+                idparam=2
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.peHini= ParamObj?.first()?.valor?.toInt()!!
+            } catch (e: Exception) {
+                gl?.peHini=8
+            }
+
+            try {
+                idparam=3
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.peHfin= ParamObj?.first()?.valor?.toInt()!!
+            } catch (e: Exception) {
+                gl?.peHfin=17
+            }
+
+            try {
+                idparam=4
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.peSab=ParamObj?.first()?.valor?.toUpperCase(Locale.getDefault())=="S"
+            } catch (e: Exception) {
+                gl?.peSab=false
+            }
+
+            try {
+                idparam=5
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.peHSini= ParamObj?.first()?.valor?.toInt()!!
+            } catch (e: Exception) {
+                gl?.peHSini=8
+            }
+
+            try {
+                idparam=6
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.peHSfin= ParamObj?.first()?.valor?.toInt()!!
+            } catch (e: Exception) {
+                gl?.peHSfin=17
+            }
+
+            try {
+                idparam=7
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.pePassAdm= ParamObj?.first()?.valor!!
+            } catch (e: Exception) {
+                gl?.pePassAdm="1234"
+            }
+
+        } catch (ee: Exception) {
+            throw Exception("Error en carga parametros: "+ee.message)
+        }
+    }
 
     @Throws(IOException::class)
     fun buildEncUpdate(cap: clsClasses.clsOrdenenccap, idest:Int, fs: String):String {

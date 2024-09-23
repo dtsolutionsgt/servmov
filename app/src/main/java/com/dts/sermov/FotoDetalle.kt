@@ -29,7 +29,6 @@ class FotoDetalle : PBase() {
     var item= clsClasses.clsOrdenfoto()
 
     var idordfoto=0
-    var picdir=""
     var horiz=false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +44,6 @@ class FotoDetalle : PBase() {
             relbot = findViewById(R.id.relbot)
 
             idordfoto=gl?.idordfoto!!
-            picdir=gl?.gstr!!
 
             OrdenfotoObj = clsOrdenfotoObj(this, Con!!, db!!)
 
@@ -99,7 +97,7 @@ class FotoDetalle : PBase() {
             lbl1?.text=item.nota
 
             try {
-                var fbm= File(picdir,item.nombre)
+                var fbm= File(gl?.picdir,item.nombre)
                 if (fbm.exists()) {
                     val fbmp = BitmapFactory.decodeFile(fbm.absolutePath)
                     img1?.setImageBitmap(fbmp)

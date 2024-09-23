@@ -106,7 +106,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun startApp() {
         try {
             try {
@@ -116,7 +115,10 @@ class MainActivity : AppCompatActivity() {
 
             try {
                 FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                var ss=e.message
+                ss=ss+""
+            }
 
             val mtimer = Handler()
             val mrunner = Runnable {

@@ -1,4 +1,4 @@
-package com.dts.service;
+package com.dts.java;
 
 import static android.content.Context.LOCATION_SERVICE;
 
@@ -8,7 +8,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import androidx.annotation.NonNull;
-
 
 public class GPSLocation implements LocationListener {
 

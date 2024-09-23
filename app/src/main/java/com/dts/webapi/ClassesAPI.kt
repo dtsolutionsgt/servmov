@@ -4,14 +4,12 @@ import kotlinx.serialization.Serializable
 
 class ClassesAPI {
 
+
     @Serializable
-    data class clsAPIUsers (
+    data class clsAPICoord (
         var type : String = "",
-        var UserId : Int = 0,
-        var Empresa  : Int = 0,
-        var UserName : String = "",
-        var Password  : String = "",
-        var IdNivelLicencia : Int = 0
+        var COORX : Double = 0.0,
+        var COORY : Double = 0.0
     )
 
     @Serializable
@@ -96,5 +94,32 @@ class ClassesAPI {
         var DESCRIPCION : String = "",
     )
 
+    @Serializable
+    data class clsAPIParam (
+        var type : String = "",
+        var CODIGO_PARAM : Int = 0,
+        var EMPRESA : Int = 0,
+        var ID : Int = 0,
+        var USERID : Int = 0,
+        var NOMBRE : String = "",
+        var VALOR : String = "",
+    )
+
+    @Serializable
+    data class clsAPIRegistro (
+        var type : String = "",
+        var CODIGO  : Int = 0,
+        var NOMBRE : String = "",
+     )
+
+    @Serializable
+    data class clsAPIUsers (
+        var type : String = "",
+        var UserId : Int = 0,
+        var Empresa  : Int = 0,
+        var UserName : String = "",
+        var Password  : String = "",
+        var IdNivelLicencia : Int = 0
+    )
 
 }

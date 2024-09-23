@@ -87,6 +87,21 @@ class DateUtils {
         return s
     }
 
+    fun sfechashymd(f: Long): String {
+        var f=f
+        val vy: Int;val vm: Int;val vd: Int
+        var s: String
+
+        vy = (f / 100000000L).toInt();f = f % 100000000
+        vm = (f / 1000000).toInt();f = f % 1000000
+        vd = (f / 10000).toInt();
+        s = ""+vy
+        if (vm > 9) s = s + vm else s = s + "0" + vm
+        if (vd > 9) s = s + vd else s = s + "0" + vd
+
+        return s
+    }
+
     fun shora(vValue: Long): String {
         var h: Long
         val m: Long

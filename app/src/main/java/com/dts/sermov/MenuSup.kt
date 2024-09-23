@@ -78,7 +78,8 @@ class MenuSup : PBase() {
 
             menus.clear()
 
-            addMenuCat(100, "Ubicación de tecnicos")
+            addMenuCat(101, "Ubicación actual")
+            addMenuCat(100, "Bitácora por día")
 
             adapter = LA_MenuAdapter(menus)
             menuview?.adapter = adapter
@@ -93,7 +94,23 @@ class MenuSup : PBase() {
 
         try {
             when (idmenu) {
-                100 -> {listaUsuarios()}
+                100 -> { listaUsuarios() }
+                101 -> { startActivity(Intent(this,UbicList::class.java))   }
+            }
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+        }
+    }
+
+    //endregion
+
+    //region Dialogs
+
+    fun dialogswitch() {
+        try {
+            when (gl?.dialogid) {
+                0 -> {}
+                1 -> {}
             }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
@@ -102,14 +119,14 @@ class MenuSup : PBase() {
 
     fun listaUsuarios() {
         try {
-            UsuarioObj?.fill("ORDER BY Nombre")
+            UsuarioObj?.fill("WHERE (rol=5) ORDER BY Nombre")
             var cn=UsuarioObj?.count
             if (cn==0) return
             if (cn!!>8) cn=8
 
             val listdlg = extListDlg();
 
-            listdlg.buildDialog(this@MenuSup, "Tecnico")
+            listdlg.buildDialog(this@MenuSup, "Vendedor")
             listdlg.setLines(cn);
             listdlg.setWidth(-1)
 
@@ -128,26 +145,11 @@ class MenuSup : PBase() {
 
     fun processlistaUsuarios(menuidx:Int) {
         try {
-           gl?.gint=UsuarioObj?.items!!?.get(menuidx)?.id!!
-           startActivity(Intent(this, UbicPers::class.java))
+            gl?.gint=UsuarioObj?.items!!?.get(menuidx)?.id!!
+            gl?.gstr= UsuarioObj?.items!!?.get(menuidx)?.nombre!!
+            startActivity(Intent(this, UbicPersList::class.java))
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
-        }
-    }
-
-
-    //endregion
-
-    //region Dialogs
-
-    fun dialogswitch() {
-        try {
-            when (gl?.dialogid) {
-                0 -> {}
-                1 -> {}
-            }
-        } catch (e: Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
         }
     }
 

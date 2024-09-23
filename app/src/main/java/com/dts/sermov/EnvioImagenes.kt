@@ -26,6 +26,7 @@ class EnvioImagenes : PBase() {
     var regpos=0
     var idfoto=""
     var ftipo=0
+    var idle=true
 
     var item=clsClasses.clsEnvioimagen()
 
@@ -52,6 +53,7 @@ class EnvioImagenes : PBase() {
                 val handler = Handler(Looper.getMainLooper())
                 handler.postDelayed({finish()}, 200)
             } else {
+                idle=false
                 processItem()
             }
 
@@ -61,9 +63,7 @@ class EnvioImagenes : PBase() {
         }
     }
 
-
     //region Events
-
 
     //endregion
 
@@ -95,7 +95,7 @@ class EnvioImagenes : PBase() {
             regpos++
 
             var devpath="/storage/emulated/0/Pictures/" + item.id
-            var storpath="fotos/" + item.id
+            var storpath="fotos/" + gl?.idemp +"/" + item.id
 
             if (item.tipo==1) {
 
@@ -130,6 +130,7 @@ class EnvioImagenes : PBase() {
     }
 
     fun finishSession() {
+        idle=true
         finish()
     }
 
@@ -158,7 +159,7 @@ class EnvioImagenes : PBase() {
 
     val backPress = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-            toast("Back Pressed")
+            if (idle) onBackPressedDispatcher?.onBackPressed() else toast("Espere, por favor . . . ")
         }
     }
 

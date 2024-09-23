@@ -14,6 +14,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.MapView
 import android.location.Address
 import android.location.Geocoder
+import androidx.activity.OnBackPressedCallback
 import java.util.Locale
 
 class UbicPers : PBase(), OnMapReadyCallback {
@@ -40,6 +41,8 @@ class UbicPers : PBase(), OnMapReadyCallback {
             setContentView(R.layout.activity_ubic_pers)
 
             super.initbase(savedInstanceState)
+
+            onBackPressedDispatcher.addCallback(this,backPress)
 
             pbar = findViewById(R.id.progressBar); pbar?.visibility= View.VISIBLE
             lbluser = findViewById(R.id.textView4)
@@ -186,14 +189,13 @@ class UbicPers : PBase(), OnMapReadyCallback {
         }
     }
 
-    override fun onBackPressed() {
-        try {
-            if (!idle) {
-                toast("Espere, por favor . . .");return
+    val backPress = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (idle) {
+                onBackPressedDispatcher?.onBackPressed()
+            } else {
+                toast("Espere, por favor . . . ")
             }
-            super.onBackPressed()
-        } catch (e: Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
         }
     }
 

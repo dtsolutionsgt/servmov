@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import com.dts.fbase.fbLocItem
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -38,6 +39,8 @@ class UbicCliente : PBase(), OnMapReadyCallback {
             setContentView(R.layout.activity_ubic_cliente)
 
             super.initbase(savedInstanceState)
+
+            onBackPressedDispatcher.addCallback(this,backPress)
 
             pbar = findViewById(R.id.progressBar); pbar?.visibility= View.VISIBLE
             lbldir = findViewById(R.id.textView5)
@@ -130,11 +133,13 @@ class UbicCliente : PBase(), OnMapReadyCallback {
         }
     }
 
-    override fun onBackPressed() {
-        try {
-            super.onBackPressed()
-        } catch (e: Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+    val backPress = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (idle) {
+                onBackPressedDispatcher?.onBackPressed()
+            } else {
+                toast("Espere, por favor . . . ")
+            }
         }
     }
 

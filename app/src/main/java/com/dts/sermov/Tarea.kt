@@ -14,6 +14,8 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
 import com.dts.base.clsClasses
@@ -28,9 +30,10 @@ import com.dts.classes.clsOrdenenccapObj
 import com.dts.classes.clsOrdenfotoObj
 import com.dts.classes.clsTipoordenObj
 import com.dts.classes.clsUpdsaveObj
+import com.dts.webapi.ClassesAPI
 import com.dts.webapi.HttpClient
 import com.google.gson.Gson
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import com.google.gson.reflect.TypeToken
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -53,6 +56,8 @@ class Tarea : PBase() {
     var lbl12: TextView? = null
     var lbl13: TextView? = null
     var txt1: EditText? = null
+    var pbar: ProgressBar? = null
+    var relbot: RelativeLayout? = null
 
     var imgnext: ImageView? = null
     var imgfoto: ImageView? = null
@@ -83,9 +88,6 @@ class Tarea : PBase() {
     var sqlsave=""
     var phoneNum=""
 
-    val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
-    val picdir="/storage/emulated/0/Pictures/"
-
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
             super.onCreate(savedInstanceState)
@@ -110,6 +112,9 @@ class Tarea : PBase() {
             imgnext = findViewById(R.id.imageView20)
             imgfoto = findViewById(R.id.imageView17)
             imgsign = findViewById(R.id.imageView18)
+            pbar = findViewById(R.id.progressBar5)
+            relbot = findViewById(R.id.relbot)
+
 
             http = HttpClient()
 
@@ -133,12 +138,15 @@ class Tarea : PBase() {
         }
     }
 
-
     //region Events
 
     fun doNext(view: View) {
         if (idestado==4) {
-            msgask(1,"Completar servicio?")
+            if (!tieneFirma()) {
+                msgbox("¡Falta la firma!")
+            } else {
+                msgask(1,"Completar servicio?")
+            }
         } else {
             msgask(0,"Atender servicio?")
         }
@@ -174,9 +182,15 @@ class Tarea : PBase() {
     }
 
     fun doSign(view: View) {
-        if (idestado==8) return
+        if (idestado!=4) return
+
         try {
-            toast("Pendiente desarrollo . . . ")
+            OrdenenccapObj?.fill("WHERE (idOrden="+idorden+")")
+            if (OrdenenccapObj?.first()?.firmacliente?.isNotEmpty()!!) {
+                msgask(4,"La firma ya existe.¿Capturar la de nuevo?")
+            } else {
+                startActivity(Intent(this, FirmaCaptura::class.java))
+            }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
         }
@@ -190,43 +204,16 @@ class Tarea : PBase() {
         if (app?.sinInternet()!!) return
 
         try {
-            http?.url=gl?.urlbase+"api/Users/GetUsers?pEmpresa="+gl?.idemp
+            http?.url=gl?.urlbase+"api/Orden/GetOrdenClienteCoord?pCliente="+idcliente
 
             val request: Request = Request.Builder()
                 .url(http?.url!!).get()
                 .addHeader("accept", "*/*")
                 .build()
 
-            //http!!.processRequest(request, { cbUsuarios() })
+            http!!.processRequest(request, { cbCoordenadas() })
         } catch (e: java.lang.Exception) {
-            //msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
-        }
-
-
-        try {
-            gl?.gpsclong=0.0;gl?.gpsclat=0.0
-
-            if (cap?.latit==0.0 || cap?.longit==0.0) {
-                if (gl?.gpslat==0.0 || gl?.gpslong==0.0) {
-                    msgbox("La ubicación no está disponible ");return
-                } else {
-                    gl?.gpsclong=gl?.gpslong!!;gl?.gpsclat=gl?.gpslat!!
-                }
-            } else {
-                gl?.gpsclong=cap?.longit!!;gl?.gpsclat=cap?.latit!!
-            }
-
-            val wazeUri = Uri.parse("https://waze.com/ul?ll="+gl?.gpsclat+","+gl?.gpsclong+"&navigate=yes")
-            val intent = Intent(Intent.ACTION_VIEW, wazeUri)
-            intent.setPackage("com.waze")
-
-            if (intent.resolveActivity(packageManager) != null) {
-                startActivity(intent)
-            } else {
-                msgbox("Falta instalar Waze")
-            }
-        } catch (e: Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);
         }
     }
 
@@ -247,6 +234,16 @@ class Tarea : PBase() {
             cap.nota=""+txt1?.text?.toString()!!
             cap.recibido=0
             OrdenenccapObj?.update(cap)
+        } catch (e: java.lang.Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+        }
+
+        try {
+            runOnUiThread({
+                pbar?.isVisible=true;relbot?.isVisible=true
+            })
+
+            actualizaImagenes()
         } catch (e: java.lang.Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
         }
@@ -531,7 +528,7 @@ class Tarea : PBase() {
             db!!.endTransaction()
 
             for (itm in fotos) {
-                var ffile = File(picdir+itm.toString())
+                var ffile = File(gl?.picdir!!+itm.toString())
                 try {
                     ffile.delete()
                 } catch (e: Exception) {}
@@ -551,6 +548,7 @@ class Tarea : PBase() {
 
             toast("Orden anulada.")
 
+            actualizaImagenes()
             finish()
         } catch (e: java.lang.Exception) {
             db!!.endTransaction()
@@ -569,7 +567,7 @@ class Tarea : PBase() {
 
             val jupd=clsClasses.clsUpdate(usql)
             val pbody = gson.toJson(jupd)
-            val body: RequestBody = pbody.toRequestBody(mediaType)
+            val body: RequestBody = pbody.toRequestBody(gl?.mediaType)
 
             http?.url=gl?.urlbase+"api/Orden/Update"
 
@@ -605,7 +603,10 @@ class Tarea : PBase() {
         if (csql.isNotEmpty()) {
             sendUpdateCoord(csql,close)
         } else {
-            if (close) finish()
+            if (close) {
+                actualizaImagenes()
+                finish()
+            }
         }
     }
 
@@ -615,7 +616,7 @@ class Tarea : PBase() {
 
             val jupd=clsClasses.clsUpdate(csql)
             val pbody = gson.toJson(jupd)
-            val body: RequestBody = pbody.toRequestBody(mediaType)
+            val body: RequestBody = pbody.toRequestBody(gl?.mediaType)
 
             http?.url=gl?.urlbase+"api/Orden/Update"
 
@@ -643,14 +644,17 @@ class Tarea : PBase() {
             runOnUiThread { toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message) }
         }
 
-        if (close) finish()
+        if (close) {
+            actualizaImagenes()
+            finish()
+        }
     }
 
     fun sendUpdateAnul(usql:String) {
         try {
             val jupd=clsClasses.clsUpdate(usql)
             val pbody = gson.toJson(jupd)
-            val body: RequestBody = pbody.toRequestBody(mediaType)
+            val body: RequestBody = pbody.toRequestBody(gl?.mediaType)
 
             http?.url=gl?.urlbase+"api/Orden/Commit"
 
@@ -668,6 +672,22 @@ class Tarea : PBase() {
 
     fun cbUpdateAnul() { }
 
+    fun actualizaImagenes() {
+        try {
+            var EnvioimagenObj= clsEnvioimagenObj(this,Con!!,db!!)
+            EnvioimagenObj?.fill()
+
+            if (EnvioimagenObj?.count!!>0) {
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({
+                    startActivity(Intent(this, EnvioImagenes::class.java))
+                }, 200)
+            }
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+    }
+
     //endregion
 
     //region Dialogs
@@ -675,10 +695,11 @@ class Tarea : PBase() {
     fun dialogswitch() {
         try {
             when (gl?.dialogid) {
-                0 -> {iniciarOrden()}
-                1 -> {completarOrden()}
-                2 -> {msgask(3,"Está seguro?")}
-                3 -> {anularOrden()}
+                0 -> { iniciarOrden() }
+                1 -> { completarOrden() }
+                2 -> { msgask(3,"Está seguro?") }
+                3 -> { anularOrden() }
+                4 -> {  startActivity(Intent(this, FirmaCaptura::class.java)) }
             }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
@@ -795,6 +816,51 @@ class Tarea : PBase() {
         }
     }
 
+    fun cbCoordenadas() {
+        var jss: ClassesAPI.clsAPICoord? = null
+        var coorx=0.0
+        var coory=0.0
+
+        try {
+            Looper.prepare()
+
+            if (http!!.retcode!=1) {
+                toast("Error: "+http!!.data);return
+            }
+
+            val parsedList =http?.splitJsonArray()
+            val RType = object : TypeToken<ClassesAPI.clsAPICoord>() {}.type
+
+            for (pls in parsedList!!) {
+                jss=gson.fromJson(pls, RType)
+                coorx=jss?.COORX!!
+                coory=jss?.COORY!!
+            }
+
+            if (coorx==0.0 || coory==0.0) {
+                msgbox("¡El cliente no tiene coordenadas!");return
+            }
+
+            try {
+                val wazeUri = Uri.parse("https://waze.com/ul?ll="+coory+","+coorx+"&navigate=yes")
+                val intent = Intent(Intent.ACTION_VIEW, wazeUri)
+                intent.setPackage("com.waze")
+
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                } else {
+                    msgbox("Falta instalar Waze")
+                }
+            } catch (e: Exception) {
+                msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+            }
+
+        } catch (e: java.lang.Exception) {
+            var es=e.message
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);
+        }
+    }
+
     fun buildCoordUpdate(cap: clsClasses.clsOrdenenccap):String {
         if (cap.longit==0.0) return ""
 
@@ -811,11 +877,36 @@ class Tarea : PBase() {
         return ""
     }
 
-    private fun makePhoneCall(phoneNumber: String) {
+    fun makePhoneCall(phoneNumber: String) {
         try {
             val callIntent = Intent(Intent.ACTION_CALL)
             callIntent.data = Uri.parse("tel:$phoneNumber")
             startActivity(callIntent)
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+    }
+
+    fun tieneFirma():Boolean {
+        try {
+            OrdenenccapObj?.fill("WHERE (idOrden="+idorden+")")
+            return (OrdenenccapObj?.first()?.firmacliente?.isNotEmpty()!!)
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message);return false
+        }
+    }
+
+    fun validaFirma() {
+        try {
+            if (idestado==4) {
+                if (tieneFirma()) {
+                    imgsign?.setImageResource(R.drawable.btn_sign_check)
+                } else {
+                    imgsign?.setImageResource(R.drawable.btn_sign)
+                }
+            } else {
+                imgsign?.setImageResource(R.drawable.blank)
+            }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
         }
@@ -839,6 +930,8 @@ class Tarea : PBase() {
             OrdenenccapObj!!.reconnect(Con!!, db!!)
             OrdendetObj!!.reconnect(Con!!, db!!)
             UpdsaveObj!!.reconnect(Con!!, db!!)
+
+            validaFirma()
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)

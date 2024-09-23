@@ -233,10 +233,6 @@ open class PBase : AppCompatActivity() {
         super.onPause()
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-    }
-
     //endregion
 
 }

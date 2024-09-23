@@ -1,26 +1,23 @@
 package com.dts.ladapt
 
-import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dts.sermov.R
 import com.dts.base.clsClasses
-import java.io.File
 
-class LA_FotoAdapter(val itemList: ArrayList<clsClasses.clsOrdenfoto>,val picturedir:String) : RecyclerView.Adapter<LA_FotoAdapter.ViewHolder>() {
+class LA_TimeAdapter(val itemList: ArrayList<clsClasses.clsTimeItem>) : RecyclerView.Adapter<LA_TimeAdapter.ViewHolder>() {
 
     var selectedItemPosition: Int = -1
-    lateinit var lay: LinearLayout
+    lateinit var lay: RelativeLayout
 
-    var picdir=picturedir
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LA_FotoAdapter.ViewHolder {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.lv_fotoitem, parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LA_TimeAdapter.ViewHolder {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.lv_timeitem, parent, false)
         return ViewHolder(v)
     }
 
@@ -28,7 +25,7 @@ class LA_FotoAdapter(val itemList: ArrayList<clsClasses.clsOrdenfoto>,val pictur
         return itemList.size
     }
 
-    override fun onBindViewHolder(holder: LA_FotoAdapter.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: LA_TimeAdapter.ViewHolder, position: Int) {
         val item = itemList[position]
         val isSelected = position == selectedItemPosition
 
@@ -55,24 +52,14 @@ class LA_FotoAdapter(val itemList: ArrayList<clsClasses.clsOrdenfoto>,val pictur
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), View.OnClickListener {
 
-        fun bindItems(mitem: clsClasses.clsOrdenfoto) {
-            val textViewName = itemView.findViewById(R.id.textViewUsername) as TextView
-            val img1 = itemView.findViewById(R.id.imageView7) as ImageView
-            lay = itemView.findViewById(R.id.relitem) as LinearLayout
+        fun bindItems(mitem: clsClasses.clsTimeItem) {
+            val textViewName = itemView.findViewById(R.id.textView1) as TextView
+            lay = itemView.findViewById(R.id.rellay) as RelativeLayout
 
-            textViewName.text = mitem.nota
-
-            try {
-                var fbm= File(picdir,mitem.nombre)
-                if (fbm.exists()) {
-                    val fbmp = BitmapFactory.decodeFile(fbm.absolutePath)
-                    img1?.setImageBitmap(fbmp)
-                }
-            } catch (e: Exception) {}
-
+            textViewName.text = mitem.nombre
         }
 
-        fun bind(mitem: clsClasses.clsOrdenfoto, isSelected: Boolean) {
+        fun bind(mitem: clsClasses.clsTimeItem, isSelected: Boolean) {
             lay.setBackgroundResource(if (isSelected)
                 R.drawable.frame_btn_sel else R.drawable.frame_btn)
         }

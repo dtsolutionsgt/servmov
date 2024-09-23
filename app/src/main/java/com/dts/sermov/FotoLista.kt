@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dts.base.clsClasses
@@ -45,9 +46,6 @@ class FotoLista : PBase() {
     var ssql=""
     var idle=true
 
-    val picdir="/storage/emulated/0/Pictures/"
-    val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -55,6 +53,8 @@ class FotoLista : PBase() {
             setContentView(R.layout.activity_foto_lista)
 
             super.initbase(savedInstanceState)
+
+            onBackPressedDispatcher.addCallback(this,backPress)
 
             recview = findViewById<View>(R.id.recview) as RecyclerView
             recview?.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL,false)
@@ -105,7 +105,7 @@ class FotoLista : PBase() {
                                 if (idle) {
                                     selitem = OrdenfotoObj?.items?.get(position)!!
                                     gl?.idordfoto = OrdenfotoObj?.items?.get(position)?.id!!
-                                    gl?.gstr = picdir
+                                    gl?.gstr = gl?.picdir!!
 
                                     callback = 2
                                     startActivity(Intent(this@FotoLista, FotoDetalle::class.java))
@@ -139,8 +139,8 @@ class FotoLista : PBase() {
 
     fun listItems() {
         try {
-            OrdenfotoObj?.fill("WHERE (idOrden="+idorden+") ORDER BY id DESC")
-            adapter = LA_FotoAdapter(OrdenfotoObj?.items!!,picdir)
+            OrdenfotoObj?.fill("WHERE (idOrden="+idorden+") AND (nombre NOT LIKE '%FIRMA%') ORDER BY id DESC")
+            adapter = LA_FotoAdapter(OrdenfotoObj?.items!!,gl?.picdir!!)
             recview?.adapter = adapter
 
             lbl1?.text="Registros: "+OrdenfotoObj?.items?.size
@@ -181,7 +181,7 @@ class FotoLista : PBase() {
         try {
             OrdenfotoObj?.delete(selitem)
 
-            var fbm= File(picdir,selitem?.nombre)
+            var fbm= File(gl?.picdir!!,selitem?.nombre)
             fbm.delete()
 
             gl?.changed=true
@@ -225,7 +225,7 @@ class FotoLista : PBase() {
         try {
             val jupd=clsClasses.clsUpdate(usql)
             val pbody = gson.toJson(jupd)
-            val body: RequestBody = pbody.toRequestBody(mediaType)
+            val body: RequestBody = pbody.toRequestBody(gl?.mediaType)
 
             http?.url=gl?.urlbase+"api/Orden/Commit"
 
@@ -334,9 +334,10 @@ class FotoLista : PBase() {
         }
     }
 
-    override fun onBackPressed() {
-        //super.onBackPressed()
-        envioLista()
+    val backPress = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            envioLista()
+        }
     }
 
     //endregion

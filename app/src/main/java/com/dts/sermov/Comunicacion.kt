@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import com.dts.base.clsClasses
 import com.dts.base.clsClasses.clsOrdenenc
@@ -21,14 +22,16 @@ import com.dts.classes.clsOrdendetObj
 import com.dts.classes.clsOrdendirObj
 import com.dts.classes.clsOrdenencObj
 import com.dts.classes.clsOrdenfotoObj
+import com.dts.classes.clsParamObj
+import com.dts.classes.clsSyntaxlogObj
 import com.dts.classes.clsTipoordenObj
+import com.dts.classes.clsUpdcmdObj
 import com.dts.classes.clsUpdsaveObj
 import com.dts.classes.clsUsuarioObj
 import com.dts.webapi.ClassesAPI
 import com.dts.webapi.HttpClient
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -56,12 +59,18 @@ class Comunicacion : PBase() {
     var OrdendirObj: clsOrdendirObj? = null
     var OrdendetObj: clsOrdendetObj? = null
     var UpdsaveObj: clsUpdsaveObj? = null
+    var UpdcmdObj: clsUpdcmdObj? = null
     var OrdenfotoObj: clsOrdenfotoObj? = null
+    var EnvioimagenObj: clsEnvioimagenObj? = null
+    var SyntaxlogObj: clsSyntaxlogObj? = null
+    var ParamObj: clsParamObj? = null
 
     var updrem = ArrayList<String>()
     var updloc = ArrayList<String>()
+    var fotos = ArrayList<String>()
 
     var selupd = clsClasses.clsUpdsave()
+    var selcmd = clsClasses.clsUpdcmd()
 
     var updpos=0
     var updsize=0
@@ -76,8 +85,7 @@ class Comunicacion : PBase() {
     var idle=true
     var enccnt=0
     var errcnt=0
-
-    val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+    var flim=0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -85,6 +93,8 @@ class Comunicacion : PBase() {
             setContentView(R.layout.activity_comunicacion)
 
             super.initbase(savedInstanceState)
+
+            onBackPressedDispatcher.addCallback(this,backPress)
 
             lblstat = findViewById(R.id.textView10);lblstat?.text=""
             relcom = findViewById(R.id.relcom);
@@ -106,6 +116,10 @@ class Comunicacion : PBase() {
             OrdendetObj = clsOrdendetObj(this, Con!!, db!!)
             OrdenfotoObj = clsOrdenfotoObj(this, Con!!, db!!)
             UpdsaveObj= clsUpdsaveObj(this,Con!!,db!!)
+            UpdcmdObj = clsUpdcmdObj(this, Con!!, db!!)
+            EnvioimagenObj = clsEnvioimagenObj(this, Con!!, db!!)
+            SyntaxlogObj = clsSyntaxlogObj(this, Con!!, db!!)
+            ParamObj=clsParamObj(this, Con!!, db!!)
 
             registrosOffline()
 
@@ -114,11 +128,9 @@ class Comunicacion : PBase() {
                 handler.postDelayed({ finish() }, 1000)
             }
 
-            if (gl?.com_pend!!) {
-                relcom?.isVisible=false
-                runOnUiThread {lblstat?.text = "Enviando pendientes . . ."}
-                enviaEncabezados()
-            }
+            relcom?.isVisible=false
+            runOnUiThread {lblstat?.text = "Enviando pendientes . . ."}
+            enviaEncabezados()
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -144,6 +156,9 @@ class Comunicacion : PBase() {
         try {
             idle=false
             pbar?.visibility=View.VISIBLE
+            relcom?.isVisible=false
+
+            limpiaTablas()
 
             errcnt=0
             upderrs=0;upderr=""
@@ -209,7 +224,7 @@ class Comunicacion : PBase() {
                     item.activo = 1
                     item.rol = jss?.IdNivelLicencia!!
 
-                    if (item.rol==2 || item.rol==3) UsuarioObj?.add(item)
+                    if (item.rol>0 || item.rol<8) UsuarioObj?.add(item)
 
                 }
 
@@ -337,6 +352,73 @@ class Comunicacion : PBase() {
                     item.nombre = jss?.NOMBRE.toString()
 
                     TipoordenObj?.add(item)
+                }
+
+                db!!.setTransactionSuccessful()
+                db!!.endTransaction()
+            } catch (e: java.lang.Exception) {
+                db!!.endTransaction()
+                msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);errcnt++
+            }
+
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({recParams()}, 200)
+
+        } catch (e: java.lang.Exception) {
+            var es=e.message
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
+        }
+    }
+
+    fun recParams() {
+        try {
+            runOnUiThread {lblstat?.text = "Actualizando parámetros . . ."}
+
+            http?.url=gl?.urlbase+"api/Users/GetParametros?idempresa="+gl?.idemp+"&idusuario="+gl?.iduser
+
+            val request: Request = Request.Builder()
+                .url(http?.url!!).get()
+                .addHeader("accept", "*/*")
+                .build()
+
+            http!!.processRequest(request, { cbParams() })
+        } catch (e: java.lang.Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
+        }
+    }
+
+    fun cbParams() {
+        var jss: ClassesAPI.clsAPIParam? = null
+        var item: clsClasses.clsParam
+
+        try {
+            if (http!!.retcode!=1) {
+                toast("Error: "+http!!.data);return
+            }
+
+            val parsedList =http?.splitJsonArray()
+            val RType = object : TypeToken<ClassesAPI.clsAPIParam>() {}.type
+
+            try {
+                db!!.beginTransaction()
+
+                db!!.execSQL("DELETE FROM Param");
+
+                ParamObj?.fill()
+
+                for (pls in parsedList!!) {
+
+                    jss=gson.fromJson(pls, RType)
+                    item= clsClasses.clsParam()
+
+                    item.codigo=jss?.CODIGO_PARAM!!
+                    item.empresa=jss?.EMPRESA!!
+                    item.id=jss?.ID!!
+                    item.userid=jss?.USERID!!
+                    item.nombre=jss?.NOMBRE!!
+                    item.valor=jss?.VALOR!!
+
+                    ParamObj?.add(item)
                 }
 
                 db!!.setTransactionSuccessful()
@@ -741,7 +823,8 @@ class Comunicacion : PBase() {
 
             }
 
-            enviaEncabezados()
+            //enviaEncabezados()
+            finok()
         } catch (e: java.lang.Exception) {
             var es=e.message
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);finerr()
@@ -753,6 +836,10 @@ class Comunicacion : PBase() {
     //region Envio encabezados
 
     fun enviaEncabezados() {
+        if (app?.sinInternet()!!) {
+            lblstat?.text = "";idle=true;return
+        }
+
         try {
             UpdsaveObj?.fill()
             if (UpdsaveObj?.count!!>0) {
@@ -789,7 +876,7 @@ class Comunicacion : PBase() {
         try {
             val jupd=clsClasses.clsUpdate(usql)
             val pbody = gson.toJson(jupd)
-            val body: RequestBody = pbody.toRequestBody(mediaType)
+            val body: RequestBody = pbody.toRequestBody(gl?.mediaType)
 
             http?.url=gl?.urlbase+"api/Orden/Update"
 
@@ -811,7 +898,8 @@ class Comunicacion : PBase() {
             var retmsg=http?.data.toString()
             if (retcode>-1) {
                 try {
-                    //UpdsaveObj?.delete(selupd)
+                    if (retcode==0) addToSyntaxLog(selupd.cmd)
+                    UpdsaveObj?.delete(selupd)
                 } catch (e: Exception) { }
             }
         } catch (e: java.lang.Exception) {
@@ -827,22 +915,92 @@ class Comunicacion : PBase() {
         }
     }
 
-
     //endregion
 
     //region Envio fotos
 
     fun enviaFotos() {
+
+        if (app?.sinInternet()!!) {
+            lblstat?.text = "";idle=true;return
+        }
+
         try {
-            UpdsaveObj?.fill()
-            if (UpdsaveObj?.count==0) {
-                finok()
+            UpdcmdObj?.fill()
+            if (UpdcmdObj?.count!!>0) {
+                idle=false
+                lsize=UpdcmdObj?.count!!;lpos=0
+                procesaFotos()
             } else {
-                finok()
+                lblstat?.text = "";idle=true
+                if (gl?.com_pend!!) finok() else relcom?.isVisible=true
             }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
-            finok()
+            lblstat?.text = "";idle=true;relcom?.isVisible=true
+            finerr()
+        }
+    }
+
+    fun procesaFotos() {
+        try {
+            if (lpos<lsize) {
+                selcmd=UpdcmdObj?.items?.get(lpos)!!
+                var cmd=selcmd.cmd;
+                cmd=cmd.replace("´","'")
+                sendUpdateFoto(cmd)
+            } else  {
+                lblstat?.text = "";idle=true
+                if (gl?.com_pend!!) finok() else relcom?.isVisible=true
+            }
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message);
+            lblstat?.text = "";idle=true;relcom?.isVisible=true
+            finerr()
+        }
+    }
+
+    fun sendUpdateFoto(usql:String) {
+        try {
+            val jupd=clsClasses.clsUpdate(usql)
+            val pbody = gson.toJson(jupd)
+            val body: RequestBody = pbody.toRequestBody(gl?.mediaType)
+
+            http?.url=gl?.urlbase+"api/Orden/Commit"
+
+            val request: Request = Request.Builder()
+                .url(http?.url!!)
+                .post(body)
+                .addHeader("accept", "*/*")
+                .build()
+
+            http!!.processRequest(request, { cbUpdateFoto() })
+        } catch (e: java.lang.Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);
+        }
+    }
+
+    fun cbUpdateFoto() {
+        try {
+            var retcode=http?.retcode!!
+            var retmsg=http?.data.toString()
+            if (retcode>-1) {
+                try {
+                    if (retcode==0) addToSyntaxLog(selcmd.cmd)
+                    UpdcmdObj?.delete(selcmd)
+                } catch (e: Exception) { }
+            }
+        } catch (e: java.lang.Exception) {
+            runOnUiThread { toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message) }
+        }
+
+        lpos++
+        try {
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({ procesaFotos() }, 200)
+        } catch (e: Exception) {
+            runOnUiThread { toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message) }
+            lblstat?.text = "";idle=true
         }
     }
 
@@ -857,7 +1015,7 @@ class Comunicacion : PBase() {
 
             val jupd=clsClasses.clsUpdate(sqlrem)
             val pbody = gson.toJson(jupd)
-            val body: RequestBody = pbody.toRequestBody(mediaType)
+            val body: RequestBody = pbody.toRequestBody(gl?.mediaType)
 
             http?.url=gl?.urlbase+"api/Orden/Update"
 
@@ -929,6 +1087,70 @@ class Comunicacion : PBase() {
 
     //endregion
 
+    //region Limpiar tablas
+
+    fun limpiaTablas() {
+
+        if (1==1) return
+
+        try {
+            db!!.beginTransaction()
+
+            runOnUiThread {lblstat?.text = "Limpiando tablas . . ."}
+
+            flim= du?.addDays(du?.actDate!!,-7)!!
+            OrdenencObj?.fill("WHERE (idestado==5) AND (fecha<"+flim+")")
+
+            if (OrdenencObj?.count!! >0) {
+                for (itm in OrdenencObj?.items!!)  {
+                    limpiaOrdenes(itm.idorden)
+                }
+                limpiaLog()
+            }
+
+            db!!.setTransactionSuccessful()
+            db!!.endTransaction()
+        } catch (e: java.lang.Exception) {
+            db!!.endTransaction()
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+        }
+    }
+
+    fun limpiaOrdenes(encid:Int) {
+
+        fotos.clear()
+        OrdenfotoObj?.fill("WHERE (idOrden="+encid+") ")
+        for (itm in OrdenfotoObj?.items!!) fotos.add(itm.nombre)
+
+        db?.execSQL("DELETE FROM Ordenenc WHERE (idorden="+encid+")");
+        db?.execSQL("DELETE FROM Ordendet WHERE (idorden="+encid+")");
+        db?.execSQL("DELETE FROM Ordenenccap WHERE (idorden="+encid+")");
+        db?.execSQL("DELETE FROM Ordenfoto WHERE (idorden="+encid+")");
+
+        for (itm in fotos) {
+            var eitem= clsClasses.clsEnvioimagen(itm.toString(),0)
+            try {
+                EnvioimagenObj?.add(eitem)
+            } catch (e: Exception) {
+                EnvioimagenObj?.update(eitem)
+            }
+        }
+
+        limpiaFotos()
+    }
+
+    fun limpiaFotos() {
+
+    }
+
+    fun limpiaLog() {
+        flim= du?.addDays(du?.actDate!!,-30)!!
+        sql="DELETE FROM Syntaxlog WHERE fecha<"+flim
+        db?.execSQL(sql);
+    }
+
+    //endregion
+
     //region Dialogs
 
     fun dialogswitch() {
@@ -951,9 +1173,11 @@ class Comunicacion : PBase() {
         lblstat?.text="Sincronización completa."
         pbar?.visibility=View.INVISIBLE
 
+        app?.params()
+
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed({
-            toastlong("Ordenes recibidos: "+enccnt)
+            if (!gl?.com_pend!!) toastlong("Ordenes recibidos: "+enccnt)
             envioConfirmacion(true)
         }, 1500)
     }
@@ -962,6 +1186,9 @@ class Comunicacion : PBase() {
         idle=true
         lblstat?.text="Sincronización termino con error."
         pbar?.visibility=View.INVISIBLE
+
+        app?.params()
+
         envioConfirmacion(false)
     }
 
@@ -1009,6 +1236,17 @@ class Comunicacion : PBase() {
 
     }
 
+    fun addToSyntaxLog(stxs:String) {
+        try {
+            var newid=SyntaxlogObj?.newID("SELECT MAX(id) FROM Syntaxlog")
+            var xsql=stxs.replace("'","´")
+            var sitem= clsClasses.clsSyntaxlog(newid!!,du?.actDateTime!!, xsql)
+            SyntaxlogObj?.add(sitem)
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+    }
+
     //endregion
 
     //region Activity Events
@@ -1028,17 +1266,23 @@ class Comunicacion : PBase() {
             OrdendetObj!!.reconnect(Con!!, db!!)
             OrdenfotoObj!!.reconnect(Con!!, db!!)
             UpdsaveObj!!.reconnect(Con!!, db!!)
+            UpdcmdObj!!.reconnect(Con!!, db!!)
+            EnvioimagenObj!!.reconnect(Con!!, db!!)
+            SyntaxlogObj!!.reconnect(Con!!,db!!)
+            ParamObj!!.reconnect(Con!!,db!!)
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
         }
     }
 
-    override fun onBackPressed() {
-        if (idle) {
-            super.onBackPressed()
-        } else {
-            toast("Espere, por favor . . . ")
+    val backPress = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (idle) {
+                onBackPressedDispatcher?.onBackPressed()
+            } else {
+                toast("Espere, por favor . . . ")
+            }
         }
     }
 

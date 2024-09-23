@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/color_light"
-    tools:context=".Foto">
+    tools:context=".Comunicacion">
 
 
     <RelativeLayout
@@ -178,7 +178,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="0dp"
             android:paddingEnd="5dp"
-            android:text="Sincronización"
+            android:text="Sincronización técnico"
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold|italic" />

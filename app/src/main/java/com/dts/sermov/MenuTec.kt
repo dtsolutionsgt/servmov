@@ -17,13 +17,12 @@ import com.dts.classes.clsEnvioimagenObj
 import com.dts.classes.clsEstadoordenObj
 import com.dts.classes.clsOrdenclienteObj
 import com.dts.classes.clsOrdenencObj
-import com.dts.classes.clsOrdenenccapObj
 import com.dts.classes.clsOrdenfotoObj
 import com.dts.classes.clsTipoordenObj
 import com.dts.classes.clsUpdsaveObj
 import com.dts.fbase.fbLocItem
+import com.dts.java.GPSLocation
 import com.dts.ladapt.LA_OrdenAdapter
-import com.dts.service.GPSLocation
 
 
 class MenuTec : PBase() {
@@ -48,8 +47,8 @@ class MenuTec : PBase() {
 
     var items = ArrayList<clsClasses.clsOrdenlist>()
 
-    var saveselidx:Int=-1
-    var afecha:Long=0L
+    var saveselidx=-1
+    var afecha=0L
     var idle=false
 
     var location: Location? = null
@@ -159,8 +158,8 @@ class MenuTec : PBase() {
             TipoordenObj?.fill()
             OrdenclienteObj?.fill()
 
-            OrdenencObj?.fill("WHERE ((fecha="+afecha+") AND (idestado>0)) OR " +
-                              "((fecha<"+afecha+") AND (idestado in (4,8))) " +
+            OrdenencObj?.fill("WHERE ((fecha="+afecha+") AND (idUsuario="+gl?.iduser!!+")  AND " +
+                              "(idestado>0)) OR ((fecha<"+afecha+") AND (idestado in (4,8)))  " +
                               "ORDER BY Fecha,idOrden")
             regs=OrdenencObj?.count!!;pend=0
 

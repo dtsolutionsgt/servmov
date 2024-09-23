@@ -23,6 +23,7 @@ class MiscUtils {
     private var ffrmdec2: DecimalFormat
     private var ffrmdec3: DecimalFormat
     private var ffrmdec4: DecimalFormat
+
     private var slang = "EN"
 
     constructor(context: Context, global: appGlobals?) {
@@ -37,6 +38,7 @@ class MiscUtils {
         ffrmdec2 = DecimalFormat("#,##0.##")
         ffrmdec3 = DecimalFormat("#,##0.00")
         ffrmdec4 = DecimalFormat("#,##0.0")
+
     }
 
     constructor(context: Context) {
@@ -50,6 +52,7 @@ class MiscUtils {
         ffrmdec2 = DecimalFormat("#,##0.##")
         ffrmdec3 = DecimalFormat("#,##0.00")
         ffrmdec4 = DecimalFormat("#,##0.0")
+
     }
 
     fun decfrm(`val`: Double): String {

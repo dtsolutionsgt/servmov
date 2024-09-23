@@ -1,26 +1,23 @@
 package com.dts.ladapt
 
-import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dts.sermov.R
 import com.dts.base.clsClasses
-import java.io.File
 
-class LA_FotoAdapter(val itemList: ArrayList<clsClasses.clsOrdenfoto>,val picturedir:String) : RecyclerView.Adapter<LA_FotoAdapter.ViewHolder>() {
+class LA_UsuarioColorAdapter(val itemList: ArrayList<clsClasses.clsUsuario>) : RecyclerView.Adapter<LA_UsuarioColorAdapter.ViewHolder>() {
 
     var selectedItemPosition: Int = -1
-    lateinit var lay: LinearLayout
+    lateinit var lay: RelativeLayout
 
-    var picdir=picturedir
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LA_FotoAdapter.ViewHolder {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.lv_fotoitem, parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LA_UsuarioColorAdapter.ViewHolder {
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.lv_usuariocoloritem, parent, false)
         return ViewHolder(v)
     }
 
@@ -28,7 +25,7 @@ class LA_FotoAdapter(val itemList: ArrayList<clsClasses.clsOrdenfoto>,val pictur
         return itemList.size
     }
 
-    override fun onBindViewHolder(holder: LA_FotoAdapter.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: LA_UsuarioColorAdapter.ViewHolder, position: Int) {
         val item = itemList[position]
         val isSelected = position == selectedItemPosition
 
@@ -55,26 +52,18 @@ class LA_FotoAdapter(val itemList: ArrayList<clsClasses.clsOrdenfoto>,val pictur
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), View.OnClickListener {
 
-        fun bindItems(mitem: clsClasses.clsOrdenfoto) {
+        fun bindItems(mitem: clsClasses.clsUsuario) {
             val textViewName = itemView.findViewById(R.id.textViewUsername) as TextView
-            val img1 = itemView.findViewById(R.id.imageView7) as ImageView
-            lay = itemView.findViewById(R.id.relitem) as LinearLayout
+            lay = itemView.findViewById(R.id.relmain) as RelativeLayout
+            var rcol = itemView.findViewById(R.id.relcol2) as RelativeLayout
 
-            textViewName.text = mitem.nota
-
-            try {
-                var fbm= File(picdir,mitem.nombre)
-                if (fbm.exists()) {
-                    val fbmp = BitmapFactory.decodeFile(fbm.absolutePath)
-                    img1?.setImageBitmap(fbmp)
-                }
-            } catch (e: Exception) {}
-
+            textViewName.text = mitem.nombre
+            rcol.setBackgroundColor(mitem.rol)
         }
 
-        fun bind(mitem: clsClasses.clsOrdenfoto, isSelected: Boolean) {
+        fun bind(mitem: clsClasses.clsUsuario, isSelected: Boolean) {
             lay.setBackgroundResource(if (isSelected)
-                R.drawable.frame_btn_sel else R.drawable.frame_btn)
+                R.drawable.frame_round_flatb_sel else R.drawable.frame_round_flatb)
         }
 
         override fun onClick(p0: View?) {}
