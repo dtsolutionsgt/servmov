@@ -31,6 +31,9 @@ class clsClasses {
         var id: Int = 0,
         var longit: Double = 0.0,
         var latit: Double = 0.0,
+        var velocidad: Double = 0.0,
+        var rumbo: Double = 0.0,
+        var precision: Double = 0.0,
     )
 
     data class clsCoordUlt(

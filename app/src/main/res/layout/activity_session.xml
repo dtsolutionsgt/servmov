@@ -77,7 +77,7 @@
             android:layout_marginTop="5dp"
             android:layout_marginBottom="10dp"
             android:paddingEnd="5dp"
-            android:text="Atencion"
+            android:text="MPos"
             android:textColor="#FFFFFF"
             android:textSize="34sp"
             android:textStyle="bold" />
@@ -92,7 +92,7 @@
             android:layout_marginEnd="0dp"
             android:layout_marginBottom="15dp"
             android:layout_toEndOf="@+id/textView14"
-            android:text="a cliente"
+            android:text="supervisor  "
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold|italic" />

@@ -48,6 +48,7 @@ class appGlobals : Application() {
     var pegps=false;var peHini=-1;var peHfin=-1;
     var peSab=false;var peHSini=-1;var peHSfin=-1;
     var pePassAdm="";
+    var peDiasCoord=7;
 
     val picdir="/storage/emulated/0/Pictures/"
     val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()

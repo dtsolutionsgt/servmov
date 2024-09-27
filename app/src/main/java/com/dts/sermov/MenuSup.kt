@@ -1,9 +1,9 @@
 package com.dts.sermov
 
-
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dts.classes.RecyclerItemClickListener
@@ -15,6 +15,7 @@ import com.dts.classes.extListDlg
 class MenuSup : PBase() {
 
     var menuview: RecyclerView? = null
+    var lbluser: TextView? = null
 
     var UsuarioObj: clsUsuarioObj? = null
 
@@ -33,6 +34,7 @@ class MenuSup : PBase() {
 
             menuview = findViewById<View>(R.id.recview) as RecyclerView
             menuview?.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL,false)
+            lbluser = findViewById(R.id.textView);lbluser?.text=gl?.nuser!!
 
             UsuarioObj = clsUsuarioObj(this, Con!!, db!!)
 
@@ -95,7 +97,7 @@ class MenuSup : PBase() {
         try {
             when (idmenu) {
                 100 -> { listaUsuarios() }
-                101 -> { startActivity(Intent(this,UbicList::class.java))   }
+                101 -> { startActivity(Intent(this,UbicList::class.java)) }
             }
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
@@ -124,7 +126,7 @@ class MenuSup : PBase() {
             if (cn==0) return
             if (cn!!>8) cn=8
 
-            val listdlg = extListDlg();
+            val listdlg = extListDlg()
 
             listdlg.buildDialog(this@MenuSup, "Vendedor")
             listdlg.setLines(cn);

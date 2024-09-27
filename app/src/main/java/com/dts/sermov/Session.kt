@@ -52,7 +52,9 @@ class Session : PBase() {
     val vmode = listOf(5,6,7)
     val fdown = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "")
 
-    val version="1.0.0.0"
+
+    val version="1.0.1.0"
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -160,6 +162,63 @@ class Session : PBase() {
 
     //region Main
 
+    fun initSession() {
+        var rol=0
+
+        try {
+            gl?.idemp=0;gl?.idsuc=0;gl?.iduser=0;gl?.nuser="Sin usuario"
+
+            val SaveposObj = clsSaveposObj(this, Con!!, db!!)
+
+            SaveposObj.fill("WHERE (id=0)")
+            if (SaveposObj.count>0) gl?.idemp=Integer.parseInt(SaveposObj?.first()?.valor)
+            if (gl?.idemp==0) {
+                toastlong("La aplicacion no está registrada");ingresaEmpresa();return;
+            }
+
+            SaveposObj.fill("WHERE (id=2)")
+            if (SaveposObj.count>0) lblemp?.text=""+SaveposObj?.first()?.valor
+
+            gl?.idsuc=gl?.idemp!!
+            gl?.gpsroot="locusr/"+gl?.idemp!!+"/"+gl?.idsuc!!+"/"
+
+            SaveposObj.fill("WHERE (id=1)")
+            if (SaveposObj.count>0) {
+                gl?.iduser=Integer.parseInt(SaveposObj?.first()?.valor)
+
+                val UsuarioObj = clsUsuarioObj(this, Con!!, db!!)
+                UsuarioObj.fill("WHERE (id="+gl?.iduser+")")
+
+                try {
+                    gl?.nuser=UsuarioObj?.first()?.nombre.toString()
+                    gl?.idrol=UsuarioObj?.first()?.rol!!
+                    rol=gl?.idrol!!
+                } catch (e: Exception) {
+                    gl?.iduser=0;gl?.nuser="Sin usuario";rol=0
+                    msgbox("Usuario no existe")
+                }
+
+            }
+
+            lbluser?.text=gl?.nuser
+
+            if (rol in vmode) {
+                gl?.modoapp=1;imglogo?.setImageResource(R.drawable.logo_sales)
+            } else {
+                gl?.modoapp=0;imglogo?.setImageResource(R.drawable.servlogo1)
+            }
+
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+
+        try {
+            app?.params()
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+
+    }
 
     //endregion
 
@@ -513,63 +572,6 @@ class Session : PBase() {
 
     }
 
-    fun initSession() {
-        var rol=0
-
-        try {
-            gl?.idemp=0;gl?.idsuc=0;gl?.iduser=0;gl?.nuser="Sin usuario"
-
-            val SaveposObj = clsSaveposObj(this, Con!!, db!!)
-
-            SaveposObj.fill("WHERE (id=0)")
-            if (SaveposObj.count>0) gl?.idemp=Integer.parseInt(SaveposObj?.first()?.valor)
-            if (gl?.idemp==0) {
-                toastlong("La aplicacion no está registrada");ingresaEmpresa();return;
-            }
-
-            SaveposObj.fill("WHERE (id=2)")
-            if (SaveposObj.count>0) lblemp?.text=""+SaveposObj?.first()?.valor
-
-            gl?.idsuc=gl?.idemp!!
-            gl?.gpsroot="locusr/"+gl?.idemp!!+"/"+gl?.idsuc!!+"/"
-
-            SaveposObj.fill("WHERE (id=1)")
-            if (SaveposObj.count>0) {
-                gl?.iduser=Integer.parseInt(SaveposObj?.first()?.valor)
-
-                val UsuarioObj = clsUsuarioObj(this, Con!!, db!!)
-                UsuarioObj.fill("WHERE (id="+gl?.iduser+")")
-
-                try {
-                    gl?.nuser=UsuarioObj?.first()?.nombre.toString()
-                    rol=UsuarioObj?.first()?.rol!!
-                } catch (e: Exception) {
-                    gl?.iduser=0;gl?.nuser="Sin usuario";rol=0
-                    msgbox("Usuario no existe")
-                }
-
-            }
-
-            lbluser?.text=gl?.nuser
-
-            if (rol in vmode) {
-                gl?.modoapp=1;imglogo?.setImageResource(R.drawable.logo_sales)
-            } else {
-                gl?.modoapp=0;imglogo?.setImageResource(R.drawable.servlogo1)
-            }
-
-        } catch (e: Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
-        }
-
-        try {
-            app?.params()
-        } catch (e: Exception) {
-            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
-        }
-
-    }
-
     fun guardaEmpresa(iditem: Int) {
         var item = clsClasses.clsSavepos()
 
@@ -593,6 +595,7 @@ class Session : PBase() {
         try {
             mPEdit?.putInt("idemp", gl?.idemp!!)
             mPEdit?.putInt("iduser", gl?.iduser!!)
+            mPEdit?.putInt("rol", gl?.idrol!!)
             mPEdit?.putBoolean("pegps", gl?.pegps!!)
             mPEdit?.putInt("peHini", gl?.peHini!!)
             mPEdit?.putInt("peHfin", gl?.peHfin!!)

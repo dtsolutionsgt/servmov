@@ -8,6 +8,7 @@ class fbCoord (troot: String?) : fbBaseCoord(troot) {
 
     var litem: clsClasses.clsCoordItem? = null
     var items = ArrayList<clsClasses.clsCoordItem>()
+    var keys = ArrayList<String>()
 
     fun setItem(path:String , item: clsClasses.clsCoordItem?) {
         fdt = fdb.getReference(root+"/"+path+"/"+item?.id)
@@ -52,6 +53,52 @@ class fbCoord (troot: String?) : fbBaseCoord(troot) {
             value = e.message
             errflag = true
         }
+    }
+
+    fun listDates(path:String,dl:Int,rnCallback: Runnable) {
+        var kkey=""
+        var ikey=0
+
+        try {
+            keys.clear()
+            fdb.getReference(root+"/"+path).get().addOnCompleteListener(OnCompleteListener<DataSnapshot> { task ->
+                if (task.isSuccessful) {
+
+                    keys.clear()
+                    val res = task.result
+
+                    if (res.exists()) {
+                        for (node in res.children) {
+                            kkey=node.key!!
+                            try {
+                                ikey=kkey.toInt()
+                                if (ikey<dl) keys.add(kkey)
+                            } catch (e: Exception) {
+                            }
+                        }
+                    }
+                    errflag = false
+                } else {
+                    value = task.exception!!.message
+                    errflag = true
+                }
+                callBack = rnCallback
+                runCallBack()
+            })
+        } catch (e: Exception) {
+            value = e.message
+            errflag = true
+        }
+    }
+
+    fun refreshConn(path:String) {
+        try {
+            fdb.getReference(root+"/"+path).get().addOnCompleteListener(OnCompleteListener<DataSnapshot> { task ->
+                if (task.isSuccessful) {
+                    val res = task.result
+                }
+            })
+        } catch (e: Exception) { }
     }
 
 

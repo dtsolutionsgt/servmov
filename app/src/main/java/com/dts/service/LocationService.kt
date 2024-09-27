@@ -33,11 +33,13 @@ class LocationService:Service() {
     var path=""
 
     // Params
-    var idemp=0;var iduser=0;var enabled=true
+    var idemp=0;var rol=0;var iduser=0;var enabled=true
     var hIni=0;var hFin=0;
     var weekend=false;var hwIni=0;var hwFin=0;
 
     val frmcoord: DecimalFormat=DecimalFormat("###0.000000")
+
+    //region Class Overrides
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
@@ -68,6 +70,8 @@ class LocationService:Service() {
     }
 
     private fun start(){
+        val rlist = listOf(2,5)
+        var flag=true
 
         val notification = NotificationCompat.Builder(this, "location")
             .setContentTitle("Ubicación")
@@ -80,12 +84,32 @@ class LocationService:Service() {
         locationClient.getLocationUpdates(10L)
             .catch { e -> e.printStackTrace() }
             .onEach {
+
                 val lat  = frmcoord.format(it.latitude)
                 val long = frmcoord.format(it.longitude)
 
-                if (granted) {
+                var dia= dayofweek
+                var hora= actHour
+
+                if (rol in rlist) flag = true else flag = false
+
+                if (!enabled) flag = false
+                if (idemp*iduser==0) flag = false
+
+                if (dia<6) {
+                    if (hora<hIni || hora>=hFin) flag = false
+                } else if (dia==6) {
+                    if (!weekend) flag = false
+                     if (hora<hwIni || hora>=hwFin) flag = false
+                } else {
+                    flag = false
+                }
+
+                if (flag) {
                     path=""+idemp+"/"+iduser+"/"+actDate
-                    coord=clsClasses.clsCoordItem(actTime,it.longitude,it.latitude)
+                    coord=clsClasses.clsCoordItem(
+                        actTime,it.longitude,it.latitude,
+                        it.speed.toDouble(),it.bearing.toDouble(),it.accuracy.toDouble())
                     fbc.setItem(path!!,coord)
 
                     coordult=clsClasses.clsCoordUlt(iduser, actDateTime(),it.longitude,it.latitude)
@@ -109,6 +133,60 @@ class LocationService:Service() {
         super.onDestroy()
         serviceScope.cancel()
     }
+
+    //end region
+
+    //region Params handling
+
+    val granted:Boolean get() {
+        val rlist = listOf(2,5)
+
+        try {
+            var dia= dayofweek
+            var hora= actHour
+
+            if (rol !in rlist) return false
+            if (!enabled) return false
+            if (idemp*iduser==0) return false
+
+            if (dia<6) {
+                if (hora<hIni || hora>=hFin) {
+                    return false
+                }
+            } else if (dia==6) {
+                if (!weekend) return false
+                if (hora<hwIni || hora>=hwFin) return false
+            } else {
+                return false
+            }
+
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    fun applyParams() {
+        try {
+            var mPref: SharedPreferences? = null
+
+            mPref = getSharedPreferences("com.dts.sermov", MODE_PRIVATE)
+            rol= mPref?.getInt("rol", 0)!!
+            idemp= mPref?.getInt("idemp", 0)!!
+            iduser=mPref?.getInt("iduser", 0)!!
+            enabled=mPref?.getBoolean("pegps", true)!!
+            hIni= mPref?.getInt("peHini", 0)!!
+            hFin=mPref?.getInt("peHfin", 0)!!
+            weekend=mPref?.getBoolean("peSab", true)!!
+            hwIni= mPref?.getInt("peHSini", 0)!!
+            hwFin=mPref?.getInt("peHSfin", 0)!!
+
+        } catch (e: Exception) {
+
+        }
+    }
+
+    //end region
 
     companion object {
 
@@ -138,6 +216,14 @@ class LocationService:Service() {
                 return f
             }
 
+        val actHour: Int get() {
+            val ch: Int;val cm: Int;var f: Int
+
+            val c = Calendar.getInstance()
+            ch = c[Calendar.HOUR_OF_DAY]
+            return ch
+        }
+
         fun actDateTime(): Long {
             var f: Int;var fl=0L
             var fecha: Long;var cyear: Int;var cmonth: Int;var cday: Int
@@ -166,38 +252,7 @@ class LocationService:Service() {
 
     }
 
-    val granted:Boolean get() {
-        var flag=true
-        try {
 
-            if (!enabled) return false
-            if (idemp*iduser==0) return false
-
-            return true
-        } catch (e: Exception) {
-            return false
-        }
-    }
-
-    fun applyParams() {
-        try {
-            var mPref: SharedPreferences? = null
-
-            mPref = getSharedPreferences("com.dts.sermov", MODE_PRIVATE)
-
-            idemp= mPref?.getInt("idemp", 0)!!
-            iduser=mPref?.getInt("iduser", 0)!!
-            enabled=mPref?.getBoolean("pegps", true)!!
-            hIni= mPref?.getInt("peHini", 0)!!
-            hFin=mPref?.getInt("peHfin", 0)!!
-            weekend=mPref?.getBoolean("peSab", true)!!
-            hwIni= mPref?.getInt("peHSini", 0)!!
-            hwFin=mPref?.getInt("peHSfin", 0)!!
-
-        } catch (e: Exception) {
-
-        }
-    }
 
 
 }

@@ -31,7 +31,7 @@ class LocationServiceHandler (val context: Context, val client: FusedLocationPro
 
             val request = LocationRequest.Builder(interval)
                 .setMinUpdateDistanceMeters(0f)
-                .setIntervalMillis(5000L)
+                .setIntervalMillis(12000L) // 3000 = apr 1 min
                 .setWaitForAccurateLocation(true)
                 .build()
 

@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.ProgressBar
 import androidx.activity.OnBackPressedCallback
@@ -14,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dts.base.clsClasses
 import com.dts.classes.RecyclerItemClickListener
 import com.dts.classes.clsUsuarioObj
+import com.dts.fbase.fbCoord
 import com.dts.fbase.fbLocUlt
 import com.dts.ladapt.LA_UsuarioColorAdapter
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -38,6 +41,7 @@ class UbicList : PBase(), OnMapReadyCallback {
     lateinit var geocoder : Geocoder
 
     var fbc: fbLocUlt? =null
+    var fbcr: fbCoord? =null
 
     var UsuarioObj: clsUsuarioObj? = null
 
@@ -60,6 +64,7 @@ class UbicList : PBase(), OnMapReadyCallback {
     var markerpos=-1
     var idle=true
     var today=0L
+    var hue=0.0F
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -79,11 +84,15 @@ class UbicList : PBase(), OnMapReadyCallback {
             geocoder = Geocoder(this, Locale.getDefault())
 
             fbc= fbLocUlt("coordult")
+            fbcr= fbCoord("coord")
+            fbcr!!.refreshConn(""+gl?.idemp!!+"/")
 
             UsuarioObj = clsUsuarioObj(this, Con!!, db!!)
 
             listItems()
-            loadCoord()
+
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed( { loadCoord() }, 200)
 
             setHandlers()
 
@@ -215,8 +224,8 @@ class UbicList : PBase(), OnMapReadyCallback {
             this.googleMap = googleMap
 
             var baseZoomLevel = 15f
-            var ubic = LatLng(14.6133, -90.53522)
-            var hue : Float
+            //var ubic = LatLng(14.6133, -90.53522)
+            var ubic = LatLng(0.0,0.0)
             var markerOptions : MarkerOptions
             var cc=0;var cpos=0
             var flag=false

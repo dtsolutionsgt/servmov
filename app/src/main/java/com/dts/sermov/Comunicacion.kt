@@ -28,8 +28,13 @@ import com.dts.classes.clsTipoordenObj
 import com.dts.classes.clsUpdcmdObj
 import com.dts.classes.clsUpdsaveObj
 import com.dts.classes.clsUsuarioObj
+import com.dts.fbase.fbCoord
 import com.dts.webapi.ClassesAPI
 import com.dts.webapi.HttpClient
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.MutableData
+import com.google.firebase.database.Transaction
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import okhttp3.Request
@@ -46,6 +51,8 @@ class Comunicacion : PBase() {
     var lblp2: TextView? = null
     var lblp3: TextView? = null
     var imgpend: ImageView? = null
+
+    var fbc: fbCoord? =null
 
     var http: HttpClient? = null
     var gson = Gson()
@@ -86,6 +93,7 @@ class Comunicacion : PBase() {
     var enccnt=0
     var errcnt=0
     var flim=0L
+    var rol=0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -105,6 +113,7 @@ class Comunicacion : PBase() {
             imgpend = findViewById(R.id.imageView29);imgpend?.isVisible=false
 
             http = HttpClient()
+            fbc= fbCoord("coord")
 
             UsuarioObj = clsUsuarioObj(this, Con!!, db!!)
             EstadoordenObj = clsEstadoordenObj(this, Con!!, db!!)
@@ -121,12 +130,16 @@ class Comunicacion : PBase() {
             SyntaxlogObj = clsSyntaxlogObj(this, Con!!, db!!)
             ParamObj=clsParamObj(this, Con!!, db!!)
 
+            rol=gl?.idrol!!
+
             registrosOffline()
 
             if (app?.sinInternet()!!) {
                 val handler = Handler(Looper.getMainLooper())
                 handler.postDelayed({ finish() }, 1000)
             }
+
+            limpiarCoordenadas()
 
             relcom?.isVisible=false
             runOnUiThread {lblstat?.text = "Enviando pendientes . . ."}
@@ -811,7 +824,6 @@ class Comunicacion : PBase() {
                         var es=e.message
                         msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
                     }
-
                 }
 
                 db!!.setTransactionSuccessful()
@@ -1091,7 +1103,7 @@ class Comunicacion : PBase() {
 
     fun limpiaTablas() {
 
-        if (1==1) return
+        //if (1==1) return
 
         try {
             db!!.beginTransaction()
@@ -1149,6 +1161,54 @@ class Comunicacion : PBase() {
         db?.execSQL(sql);
     }
 
+    fun limpiarCoordenadas() {
+        try {
+            var fa=du?.actDate
+            fa=du?.addDays(fa!!,-gl?.peDiasCoord!!)
+            var dl:Int=(du?.getyear(fa!!)!! % 2000)*10000+(du?.getmonth(fa!!)!!)*100+du?.getday(fa!!)!!
+
+            var path=""+gl?.idemp+"/"+gl?.iduser+"/"
+
+            fbc?.listDates(path,dl,{ cbLimpiarCoordenadas() })
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+    }
+
+    fun cbLimpiarCoordenadas() {
+        try {
+            if (fbc?.errflag!!) throw java.lang.Exception(fbc?.value)
+
+            var kn=fbc?.keys?.size
+            if (kn==0) return
+
+            fbc?.fdt?.runTransaction(object : Transaction.Handler {
+                override fun doTransaction(currentData: MutableData): Transaction.Result {
+                    var path=""+gl?.idemp+"/"+gl?.iduser+"/"
+
+                    for (itm in fbc?.keys!!) {
+                        fbc?.removeValue(path+itm)
+                    }
+
+                    return Transaction.success(currentData)
+                }
+
+                override fun onComplete(error: DatabaseError?, committed: Boolean, currentData: DataSnapshot?) {
+                    if (error != null) {
+                        var fe=error.toException().message
+                        var succ=false
+                    } else if (committed) {
+                        var succ=true
+                    }
+                }
+            })
+
+
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+    }
+
     //endregion
 
     //region Dialogs
@@ -1177,7 +1237,9 @@ class Comunicacion : PBase() {
 
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed({
-            if (!gl?.com_pend!!) toastlong("Ordenes recibidos: "+enccnt)
+            if (!gl?.com_pend!!) {
+                if (rol==2) toastlong("Ordenes recibidos: "+enccnt)
+            }
             envioConfirmacion(true)
         }, 1500)
     }

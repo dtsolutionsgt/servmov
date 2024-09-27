@@ -7,6 +7,7 @@ import android.os.Environment
 import android.view.Gravity
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.dts.base.AppMethods
 import com.dts.base.BaseDatos
 import com.dts.base.DateUtils
@@ -47,6 +48,8 @@ open class PBase : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_pbase)
         } catch (e: Exception) {

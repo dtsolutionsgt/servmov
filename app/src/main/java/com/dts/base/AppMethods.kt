@@ -124,6 +124,16 @@ class AppMethods( private val cont: Context, private val gl: appGlobals,
                 gl?.pePassAdm="1234"
             }
 
+            try {
+                idparam=8
+                ParamObj.fill("WHERE (id="+idparam+") AND (userid="+gl?.iduser!!+")")
+                if (ParamObj.count==0) ParamObj.fill("WHERE (id="+idparam+")")
+
+                gl?.peDiasCoord= ParamObj?.first()?.valor!!.toInt()
+            } catch (e: Exception) {
+                gl?.peDiasCoord=7
+            }
+
         } catch (ee: Exception) {
             throw Exception("Error en carga parametros: "+ee.message)
         }

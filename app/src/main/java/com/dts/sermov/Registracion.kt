@@ -6,10 +6,14 @@ import android.os.Looper
 import android.view.View
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.Toast
 import com.dts.base.clsClasses
 import com.dts.classes.clsSaveposObj
 import com.dts.webapi.ClassesAPI
 import com.dts.webapi.HttpClient
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import okhttp3.Request
@@ -20,12 +24,16 @@ class Registracion : PBase() {
     var txtpin: EditText? = null
     var pbar: ProgressBar? = null
 
+    private lateinit var auth: FirebaseAuth
+
     var http: HttpClient? = null
     var gson = Gson()
 
     var idle=true
     var email=""
     var pin=0
+    var nom_emp=""
+    var authfb=false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -38,7 +46,13 @@ class Registracion : PBase() {
             txtpin = findViewById(R.id.editTextNumber)
             pbar = findViewById(R.id.progressBar2);pbar?.visibility=View.INVISIBLE
 
+            //txtemail?.setText("jpospichal@dts.com.gt");txtpin?.setText("1234")
+
             http = HttpClient()
+
+            auth = Firebase.auth
+            val currentUser = auth.currentUser
+            if (currentUser != null) authfb=true
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -84,7 +98,6 @@ class Registracion : PBase() {
     fun cbRegistro() {
         var jss: ClassesAPI.clsAPIRegistro? = null
         var cod_emp=0
-        var nom_emp=""
 
         try {
             Looper.prepare()
@@ -119,11 +132,6 @@ class Registracion : PBase() {
                 SaveposObj.update(item)
             }
 
-            runOnUiThread( {
-                toastlong("Registrada empresa:\n\n"+nom_emp+"\n")
-            } )
-
-
             var itemn = clsClasses.clsSavepos()
             try {
                 itemn.id=2;itemn.valor=nom_emp.toString()
@@ -132,8 +140,12 @@ class Registracion : PBase() {
                 SaveposObj.update(itemn)
             }
 
-            idle=true;pbar?.visibility=View.INVISIBLE
-            finish()
+            if (authfb) {
+                runOnUiThread( { toastlong("Registración correcta") } );finish()
+            } else {
+                registraUsuarioAuth(email,"Mpos"+pin)
+            }
+
         } catch (e: java.lang.Exception) {
             var es=e.message
             msgbox(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message);
@@ -188,6 +200,28 @@ class Registracion : PBase() {
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message);return false
         }
+    }
+
+    fun registraUsuarioAuth(a_email:String,a_pass:String) {
+        try {
+            auth.createUserWithEmailAndPassword(a_email, a_pass)
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        runOnUiThread( { toastlong("Registrada empresa:\n\n"+nom_emp+"\n") } )
+                        finish()
+                    } else {
+                        failMsg(""+task.exception?.message)
+                    }
+                }
+        } catch (e: Exception) {
+            msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
+        }
+
+        idle=true;pbar?.visibility=View.INVISIBLE
+    }
+
+    fun failMsg(fmsg: String) {
+        msgbox("No se logro registrar :\n"+fmsg)
     }
 
     //endregion
