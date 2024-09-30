@@ -92,7 +92,7 @@ class UbicList : PBase(), OnMapReadyCallback {
             listItems()
 
             val handler = Handler(Looper.getMainLooper())
-            handler.postDelayed( { loadCoord() }, 200)
+            handler.postDelayed( { loadCoord() }, 1000)
 
             setHandlers()
 

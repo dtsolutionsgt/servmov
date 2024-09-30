@@ -11,6 +11,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
 import android.provider.Settings
@@ -53,7 +55,7 @@ class Session : PBase() {
     val fdown = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "")
 
 
-    val version="1.0.1.0"
+    val version="1.0.2.0"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +78,10 @@ class Session : PBase() {
             UsuarioObj = clsUsuarioObj(this, Con!!, db!!)
 
             setHandlers()
+
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed( { startService() }, 1000)
+
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -220,6 +226,33 @@ class Session : PBase() {
 
     }
 
+    fun startService() {
+        try {
+            if (parametrosServico()) {
+                Intent(applicationContext, LocationService::class.java).apply {
+                    action = LocationService.ACTION_START
+                    startService(this)
+                }
+                toast("Servicio inicializado . . .")
+            }
+        } catch (e: java.lang.Exception) {
+            var ss=e.message
+            toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + ss)
+        }
+    }
+
+    fun stopService() {
+        try {
+            Intent(applicationContext, LocationService::class.java).apply {
+                action = LocationService.ACTION_STOP
+                startService(this)
+            }
+            toast("Servicio terminado . . .")
+        } catch (e: java.lang.Exception) {
+            toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
+        }
+    }
+
     //endregion
 
     //region App Management
@@ -350,33 +383,6 @@ class Session : PBase() {
 
     private fun backupLocal() {
         copyToDownload(DBName!!, "Base de datos ("+ DBName+") guardada en carpeta DOWNLOAD .")
-    }
-
-    fun startService() {
-        try {
-            if (parametrosServico()) {
-                Intent(applicationContext, LocationService::class.java).apply {
-                    action = LocationService.ACTION_START
-                    startService(this)
-                }
-                toast("Servicio inicializado . . .")
-            }
-        } catch (e: java.lang.Exception) {
-            var ss=e.message
-            toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + ss)
-        }
-    }
-
-    fun stopService() {
-        try {
-            Intent(applicationContext, LocationService::class.java).apply {
-                action = LocationService.ACTION_STOP
-                startService(this)
-            }
-            toast("Servicio terminado . . .")
-        } catch (e: java.lang.Exception) {
-            toast(object : Any() {}.javaClass.enclosingMethod.name + " . " + e.message)
-        }
     }
 
     //endregion

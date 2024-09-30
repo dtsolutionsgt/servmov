@@ -137,9 +137,9 @@ class Comunicacion : PBase() {
             if (app?.sinInternet()!!) {
                 val handler = Handler(Looper.getMainLooper())
                 handler.postDelayed({ finish() }, 1000)
+            } else {
+                limpiarCoordenadas()
             }
-
-            limpiarCoordenadas()
 
             relcom?.isVisible=false
             runOnUiThread {lblstat?.text = "Enviando pendientes . . ."}
