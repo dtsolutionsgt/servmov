@@ -244,9 +244,6 @@ class FirmaCaptura : PBase() {
                 1 -> {signatureView.clear()}
                 2 -> {
                     saveBitmap(signatureView.getSignatureBitmap())
-
-
-
                 }
             }
         } catch (e: Exception) {

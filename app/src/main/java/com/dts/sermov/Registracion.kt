@@ -50,9 +50,11 @@ class Registracion : PBase() {
 
             http = HttpClient()
 
-            auth = Firebase.auth
-            val currentUser = auth.currentUser
-            if (currentUser != null) authfb=true
+            //auth = Firebase.auth
+            //val currentUser = auth.currentUser
+            //if (currentUser != null) authfb=true
+
+            authfb=true
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -140,11 +142,11 @@ class Registracion : PBase() {
                 SaveposObj.update(itemn)
             }
 
-            if (authfb) {
+            //if (authfb) {
                 runOnUiThread( { toastlong("Registración correcta") } );finish()
-            } else {
-                registraUsuarioAuth(email,"Mpos"+pin)
-            }
+            //} else {
+            //    registraUsuarioAuth(email,"Mpos"+pin)
+            //}
 
         } catch (e: java.lang.Exception) {
             var es=e.message

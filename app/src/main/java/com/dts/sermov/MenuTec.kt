@@ -66,7 +66,7 @@ class MenuTec : PBase() {
             lbluser = findViewById(R.id.textView15);lbluser?.text=gl?.nuser!!
             lblfecha = findViewById(R.id.textView8)
             lblreg = findViewById(R.id.textView)
-            lblpend = findViewById(R.id.textView31);lblpend?.text=""
+            lblpend = findViewById(R.id.textView);lblpend?.text=""
             imgpend = findViewById(R.id.imageView24);imgpend?.isVisible=false
 
             OrdenencObj = clsOrdenencObj(this, Con!!, db!!)

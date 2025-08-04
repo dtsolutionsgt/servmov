@@ -65,8 +65,6 @@ class Tablas : PBase() {
 
     //region Events
 
-    // Events
-
     fun doClear(view: View?) {
         try {
             txt1!!.setText("")

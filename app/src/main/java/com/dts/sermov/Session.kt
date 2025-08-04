@@ -1,8 +1,6 @@
 package com.dts.sermov
 
 import android.app.AlertDialog
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
@@ -21,14 +19,18 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.dts.base.clsClasses
 import com.dts.classes.clsSaveposObj
 import com.dts.classes.clsUsuarioObj
 import com.dts.classes.extListDlg
+import com.dts.fbase.fbBase
 import com.dts.fbase.fbLocItem
 import com.dts.service.LocationService
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
@@ -41,7 +43,7 @@ class Session : PBase() {
     var lblver: TextView? = null
     var imglogo: ImageView? = null
 
-    var fbl:fbLocItem? =null
+    var fbl:fbLocItem? = null
 
     var UsuarioObj: clsUsuarioObj? = null
 
@@ -54,9 +56,7 @@ class Session : PBase() {
     val vmode = listOf(5,6,7)
     val fdown = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "")
 
-
-    val version="1.0.2.0"
-
+    val version="1.0.3.1"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -78,10 +78,6 @@ class Session : PBase() {
             UsuarioObj = clsUsuarioObj(this, Con!!, db!!)
 
             setHandlers()
-
-            val handler = Handler(Looper.getMainLooper())
-            handler.postDelayed( { startService() }, 1000)
-
 
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
@@ -130,10 +126,8 @@ class Session : PBase() {
         }
 
         try {
-
             //startActivity(Intent(this,Comunicacion::class.java))
             //llamaHttp()
-
             showMainMenu()
             //startActivity(Intent(this,Foto::class.java))
             //startActivity(Intent(this,FirmaCaptura::class.java))
@@ -214,6 +208,11 @@ class Session : PBase() {
                 gl?.modoapp=0;imglogo?.setImageResource(R.drawable.servlogo1)
             }
 
+            if (rol==5) {
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({ startService() }, 1000)
+            }
+
         } catch (e: Exception) {
             msgbox(object : Any() {}.javaClass.enclosingMethod.name+" . "+e.message)
         }
@@ -233,7 +232,7 @@ class Session : PBase() {
                     action = LocationService.ACTION_START
                     startService(this)
                 }
-                toast("Servicio inicializado . . .")
+                //toast("Servicio inicializado . . .")
             }
         } catch (e: java.lang.Exception) {
             var ss=e.message
